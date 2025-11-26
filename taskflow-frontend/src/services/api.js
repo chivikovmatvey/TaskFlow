@@ -1,0 +1,28 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Пример использования
+export const boardService = {
+  async getBoards() {
+    const { data, error } = await supabase
+      .from('boards')
+      .select('*')
+    
+    if (error) throw error
+    return data
+  },
+
+  async createBoard(board) {
+    const { data, error } = await supabase
+      .from('boards')
+      .insert([board])
+      .select()
+    
+    if (error) throw error
+    return data[0]
+  }
+}
