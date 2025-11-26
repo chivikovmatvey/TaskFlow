@@ -19,13 +19,11 @@ export function useRealtimeBoard(boardId) {
     console.log('🔴 [Realtime] Setting up for board:', boardId)
 
     const setupChannel = () => {
-      // Очищаем старый канал если есть
       if (channelRef.current) {
         console.log('🔄 [Realtime] Removing old channel')
         supabase.removeChannel(channelRef.current)
       }
 
-      // Создаем новый канал
       const channel = supabase
         .channel(`board-${boardId}`, {
           config: {
@@ -33,7 +31,6 @@ export function useRealtimeBoard(boardId) {
           },
         })
         
-        // TASKS - INSERT
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'tasks', filter: `board_id=eq.${boardId}` },
@@ -47,7 +44,6 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // TASKS - UPDATE
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'tasks', filter: `board_id=eq.${boardId}` },
@@ -57,7 +53,6 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // TASKS - DELETE
         .on(
           'postgres_changes',
           { event: 'DELETE', schema: 'public', table: 'tasks', filter: `board_id=eq.${boardId}` },
@@ -68,7 +63,6 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // COLUMNS - INSERT
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'columns', filter: `board_id=eq.${boardId}` },
@@ -79,7 +73,6 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // COLUMNS - UPDATE
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'columns', filter: `board_id=eq.${boardId}` },
@@ -89,7 +82,6 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // COLUMNS - DELETE
         .on(
           'postgres_changes',
           { event: 'DELETE', schema: 'public', table: 'columns', filter: `board_id=eq.${boardId}` },
@@ -100,28 +92,24 @@ export function useRealtimeBoard(boardId) {
           }
         )
         
-        // COMMENTS - все события
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'comments' },
           (payload) => {
             console.log('✅ [Realtime] Comment event:', payload.eventType, payload)
             
-            // Для INSERT и UPDATE используем new, для DELETE - old
             const taskId = payload.new?.task_id || payload.old?.task_id
             
             if (taskId) {
               console.log('🔄 [Realtime] Invalidating comments for task:', taskId)
               queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
             } else {
-              // Если task_id не доступен, обновляем все комментарии
               console.log('🔄 [Realtime] Invalidating all comments')
               queryClient.invalidateQueries({ queryKey: ['comments'] })
             }
           }
         )
         
-        // BOARD_MEMBERS - все события
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'board_members', filter: `board_id=eq.${boardId}` },
@@ -144,7 +132,6 @@ export function useRealtimeBoard(boardId) {
           } else if (status === 'CHANNEL_ERROR') {
             console.error('❌ [Realtime] Channel error:', err)
             
-            // Переподключаемся через 5 секунд
             if (reconnectTimeoutRef.current) {
               clearTimeout(reconnectTimeoutRef.current)
             }
@@ -164,7 +151,6 @@ export function useRealtimeBoard(boardId) {
 
     setupChannel()
 
-    // Cleanup
     return () => {
       console.log('🔴 [Realtime] Cleaning up')
       

@@ -17,13 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Проверяем текущую сессию
     authService.getSession().then((session) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Подписываемся на изменения аутентификации
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null)

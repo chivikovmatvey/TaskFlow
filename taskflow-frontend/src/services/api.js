@@ -5,7 +5,6 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Пример использования
 export const boardService = {
   async getBoards() {
     const { data, error } = await supabase

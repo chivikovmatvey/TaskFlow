@@ -1,7 +1,6 @@
 import { supabase } from './supabaseClient'
 
 export const taskService = {
-  // Создать задачу
   async createTask(columnId, boardId, title, description = '', position = 0) {
     console.log('🔵 Creating task:', { columnId, boardId, title, position })
 
@@ -29,7 +28,6 @@ export const taskService = {
     return data
   },
 
-  // Обновить задачу
   async updateTask(taskId, updates) {
     console.log('🔵 Updating task:', taskId, updates)
 
@@ -49,7 +47,6 @@ export const taskService = {
     return data
   },
 
-  // Переместить задачу
   async moveTask(taskId, newColumnId, newPosition) {
     console.log('🔵 Moving task:', { taskId, newColumnId, newPosition })
 
@@ -72,7 +69,6 @@ export const taskService = {
     return data
   },
 
-  // Удалить задачу
   async deleteTask(taskId) {
     console.log('🔵 Deleting task:', taskId)
 
@@ -89,7 +85,6 @@ export const taskService = {
     console.log('✅ Task deleted')
   },
 
-  // Получить комментарии задачи
   async getTaskComments(taskId) {
     const { data, error } = await supabase
       .from('comments')
@@ -101,7 +96,6 @@ export const taskService = {
     return data
   },
 
-  // Добавить комментарий
   async addComment(taskId, content) {
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -138,7 +132,6 @@ export const taskService = {
     return data
   },
 
-  // Удалить комментарий
   async deleteComment(commentId) {
     console.log('🔵 Deleting comment:', commentId)
 
@@ -154,7 +147,6 @@ export const taskService = {
 
     console.log('✅ Comment deleted')
   },
-  // Архивировать задачу
   async archiveTask(taskId) {
     console.log('🔵 Archiving task:', taskId)
 
@@ -177,7 +169,6 @@ export const taskService = {
     return data
   },
 
-  // Восстановить задачу из архива
   async unarchiveTask(taskId) {
     console.log('🔵 Unarchiving task:', taskId)
 
@@ -200,7 +191,6 @@ export const taskService = {
     return data
   },
 
-  // Получить архивные задачи
   async getArchivedTasks(boardId) {
     console.log('🔵 Fetching archived tasks:', boardId)
 
@@ -220,11 +210,9 @@ export const taskService = {
     return data
   },
 
-  // Копировать задачу
   async duplicateTask(taskId) {
     console.log('🔵 Duplicating task:', taskId)
 
-    // Получаем оригинальную задачу
     const { data: original, error: fetchError } = await supabase
       .from('tasks')
       .select('*')
@@ -238,7 +226,6 @@ export const taskService = {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Создаем копию
     const { data, error } = await supabase
       .from('tasks')
       .insert({

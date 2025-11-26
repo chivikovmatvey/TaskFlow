@@ -12,7 +12,6 @@ function CommentItem({ comment, taskId, currentUserId }) {
 
   const isOwner = comment.user_id === currentUserId
 
-  // Мутация для обновления комментария
   const updateCommentMutation = useMutation({
     mutationFn: (content) => taskService.updateComment(comment.id, content),
     onSuccess: () => {
@@ -25,14 +24,12 @@ function CommentItem({ comment, taskId, currentUserId }) {
     },
   })
 
-  // Мутация для удаления комментария
   const deleteCommentMutation = useMutation({
     mutationFn: () => taskService.deleteComment(comment.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
       toast.success('Комментарий удален')
 
-      // Принудительно обновляем
       queryClient.refetchQueries({ queryKey: ['comments', taskId] })
     },
     onError: (error) => {

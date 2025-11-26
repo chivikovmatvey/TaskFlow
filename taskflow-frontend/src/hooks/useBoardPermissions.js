@@ -10,14 +10,12 @@ export function useBoardPermissions(boardId) {
     queryFn: async () => {
       if (!boardId || !user?.id) return null
 
-      // Получаем информацию о доске
       const { data: board } = await supabase
         .from('boards')
         .select('owner_id')
         .eq('id', boardId)
         .single()
 
-      // Проверяем роль пользователя
       const { data: member } = await supabase
         .from('board_members')
         .select('role')
@@ -33,12 +31,12 @@ export function useBoardPermissions(boardId) {
         isAdmin: role === 'admin' || isOwner,
         canManageColumns: role === 'admin' || isOwner,
         canManageMembers: isOwner,
-        canManageTasks: true, // Все участники
+        canManageTasks: true, 
         role,
       }
     },
     enabled: !!boardId && !!user?.id,
-    staleTime: 60000, // Кэшируем на минуту
+    staleTime: 60000, 
   })
 
   return permissions || {

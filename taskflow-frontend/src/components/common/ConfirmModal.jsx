@@ -6,7 +6,7 @@ function ConfirmModal({
   message, 
   confirmText = 'Подтвердить',
   cancelText = 'Отмена',
-  type = 'danger' // 'danger' | 'warning' | 'info'
+  type = 'danger' 
 }) {
   if (!isOpen) return null
 

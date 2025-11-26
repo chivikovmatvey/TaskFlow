@@ -1,7 +1,6 @@
 import { supabase } from './supabaseClient'
 
 export const columnService = {
-  // Создать колонку
   async createColumn(boardId, title, position) {
     const { data, error } = await supabase
       .from('columns')
@@ -19,7 +18,6 @@ export const columnService = {
     return data
   },
 
-  // Обновить колонку
   async updateColumn(columnId, updates) {
     const { data, error } = await supabase
       .from('columns')
@@ -32,7 +30,6 @@ export const columnService = {
     return data
   },
 
-  // Удалить колонку
   async deleteColumn(columnId) {
     const { error } = await supabase
       .from('columns')

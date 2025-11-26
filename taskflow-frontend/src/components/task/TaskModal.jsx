@@ -37,10 +37,8 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     queryFn: () => boardService.getBoard(boardId),
   })
 
-  // Добавил: Проверка владельца
   const isOwner = board?.owner_id === user?.id
 
-  // Добавил: Загрузка email владельца
   const { data: ownerEmail } = useQuery({
     queryKey: ['owner-email', board?.owner_id],
     queryFn: async () => {
@@ -57,7 +55,6 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     enabled: !!board?.owner_id && !isOwner,
   })
 
-  // Добавил: Функция из BoardMembers
   const getOwnerDisplayEmail = () => {
     if (isOwner && user) {
       return user.email

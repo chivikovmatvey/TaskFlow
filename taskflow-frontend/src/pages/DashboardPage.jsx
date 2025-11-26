@@ -16,16 +16,13 @@ function DashboardPage() {
   const [newBoardDescription, setNewBoardDescription] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, boardId: null, boardTitle: '' })
 
-  // Подключаем Real-time обновления для дашборда
   useRealtimeDashboard()
 
-  // Загружаем доски
   const { data: boards, isLoading } = useQuery({
     queryKey: ['boards'],
     queryFn: boardService.getBoards,
   })
 
-  // Мутация для создания доски
   const createBoardMutation = useMutation({
     mutationFn: (data) => boardService.createBoard(data.title, data.description),
     onMutate: async (newBoard) => {
@@ -33,7 +30,6 @@ function DashboardPage() {
 
       const previousBoards = queryClient.getQueryData(['boards'])
 
-      // Создаем временную доску
       const tempBoard = {
         id: `temp-${Date.now()}`,
         title: newBoard.title,
@@ -54,10 +50,8 @@ function DashboardPage() {
       setNewBoardTitle('')
       setNewBoardDescription('')
 
-      // Обновляем с сервера
       queryClient.invalidateQueries({ queryKey: ['boards'] })
 
-      // Переходим на доску
       navigate(`/board/${newBoard.id}`)
     },
     onError: (error, variables, context) => {
@@ -68,7 +62,6 @@ function DashboardPage() {
     },
   })
 
-  // Мутация для удаления доски
   const deleteBoardMutation = useMutation({
     mutationFn: boardService.deleteBoard,
     onSuccess: () => {

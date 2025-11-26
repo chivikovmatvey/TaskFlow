@@ -24,7 +24,6 @@ export function useRealtimeDashboard() {
         },
         (payload) => {
           console.log('🔄 Board changed:', payload.eventType)
-          // Обновляем список досок
           queryClient.invalidateQueries({ queryKey: ['boards'] })
         }
       )
@@ -37,7 +36,6 @@ export function useRealtimeDashboard() {
         },
         (payload) => {
           console.log('🔄 Member added:', payload.new)
-          // Если добавили текущего пользователя, обновляем список досок
           if (payload.new?.user_id === user.id) {
             console.log('👤 You were added to a board, refreshing...')
             queryClient.invalidateQueries({ queryKey: ['boards'] })
@@ -53,10 +51,6 @@ export function useRealtimeDashboard() {
         },
         (payload) => {
           console.log('🔄 Member removed:', payload.old)
-          // При удалении участника всегда обновляем список досок
-          // Это гарантирует, что удаленный участник увидит изменения
-          // payload.old может быть пустым без REPLICA IDENTITY FULL,
-          // поэтому обновляем безусловно
           console.log('👤 Membership deleted, refreshing boards...')
           queryClient.invalidateQueries({ queryKey: ['boards'] })
         }
