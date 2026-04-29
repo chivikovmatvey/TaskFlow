@@ -1,49 +1,40 @@
-import { supabase } from './supabaseClient'
+import { apiClient, setAuth, clearAuth, getStoredUser } from './apiClient'
 
 export const authService = {
   async signUp(email, password, fullName) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    })
-
-    if (error) throw error
+    const { data } = await apiClient.post('/auth/register', { email, password, fullName })
+    setAuth({ token: data.token, user: data.user })
     return data
   },
 
   async signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) throw error
+    const { data } = await apiClient.post('/auth/login', { email, password })
+    setAuth({ token: data.token, user: data.user })
     return data
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    clearAuth()
   },
 
   async getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error) throw error
-    return user
+    try {
+      const { data } = await apiClient.get('/auth/me')
+      return data.user
+    } catch {
+      return null
+    }
   },
 
-  async getSession() {
-    const { data: { session }, error } = await supabase.auth.getSession()
-    if (error) throw error
-    return session
+  getStoredUser,
+
+  async getUserByEmail(email) {
+    const { data } = await apiClient.get('/auth/lookup', { params: { email } })
+    return data.user
   },
 
-  onAuthStateChange(callback) {
-    return supabase.auth.onAuthStateChange(callback)
+  async getUserById(id) {
+    const { data } = await apiClient.get('/auth/lookup', { params: { id } })
+    return data.user
   },
 }

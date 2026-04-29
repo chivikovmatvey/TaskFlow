@@ -58,7 +58,7 @@ function CommentItem({ comment, taskId, currentUserId }) {
 
   return (
     <>
-      <div className="bg-white border rounded-lg p-4 hover:border-gray-300 transition">
+      <div className="bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg p-4 hover:border-gray-300 dark:hover:border-gray-500 transition">
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
             {isOwner ? currentUserId?.[0]?.toUpperCase() : '?'}
@@ -66,10 +66,10 @@ function CommentItem({ comment, taskId, currentUserId }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {isOwner ? 'Вы' : 'Пользователь'}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(comment.created_at).toLocaleString('ru-RU', {
                     day: 'numeric',
                     month: 'short',
@@ -78,7 +78,7 @@ function CommentItem({ comment, taskId, currentUserId }) {
                   })}
                 </span>
                 {comment.updated_at && comment.updated_at !== comment.created_at && (
-                  <span className="text-xs text-gray-400 italic">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 italic">
                     (изменено)
                   </span>
                 )}
@@ -88,7 +88,7 @@ function CommentItem({ comment, taskId, currentUserId }) {
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="p-1 text-gray-400 hover:text-blue-600 rounded transition"
+                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded transition"
                     title="Редактировать"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +97,7 @@ function CommentItem({ comment, taskId, currentUserId }) {
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="p-1 text-gray-400 hover:text-red-600 rounded transition"
+                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded transition"
                     title="Удалить"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +113,7 @@ function CommentItem({ comment, taskId, currentUserId }) {
                 <textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
                   rows="3"
                   autoFocus
                 />
@@ -130,14 +130,14 @@ function CommentItem({ comment, taskId, currentUserId }) {
                       setIsEditing(false)
                       setEditedContent(comment.content)
                     }}
-                    className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded hover:bg-gray-300 transition"
+                    className="px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
                   >
                     Отмена
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
                 {comment.content}
               </p>
             )}

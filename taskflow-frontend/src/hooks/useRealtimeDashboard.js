@@ -1,87 +1,33 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { supabase } from '../services/supabaseClient'
+import { getSocket } from '../services/socketClient'
 import { useAuth } from '../context/AuthContext'
 
 export function useRealtimeDashboard() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const channelRef = useRef(null)
 
   useEffect(() => {
     if (!user) return
+    const socket = getSocket()
+    if (!socket) return
 
-    console.log('🔴 Setting up Realtime for dashboard')
+    const join = () => socket.emit('join-dashboard')
+    if (socket.connected) join()
+    socket.on('connect', join)
 
-    const channel = supabase
-      .channel(`dashboard-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'boards',
-        },
-        (payload) => {
-          console.log('🔄 Board changed:', payload.eventType)
-          queryClient.invalidateQueries({ queryKey: ['boards'] })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'board_members',
-        },
-        (payload) => {
-          console.log('🔄 Member added:', payload.new)
-          if (payload.new?.user_id === user.id) {
-            console.log('👤 You were added to a board, refreshing...')
-            queryClient.invalidateQueries({ queryKey: ['boards'] })
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'board_members',
-        },
-        (payload) => {
-          console.log('🔄 Member removed:', payload.old)
-          console.log('👤 Membership deleted, refreshing boards...')
-          queryClient.invalidateQueries({ queryKey: ['boards'] })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'board_members',
-        },
-        (payload) => {
-          console.log('🔄 Member updated:', payload.new)
-          if (payload.new?.user_id === user.id || payload.old?.user_id === user.id) {
-            console.log('👤 Your membership updated, refreshing boards...')
-            queryClient.invalidateQueries({ queryKey: ['boards'] })
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('🔄 Dashboard Realtime status:', status)
-      })
-
-    channelRef.current = channel
+    const onChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] })
+    }
+    socket.on('dashboard:changed', onChanged)
+    socket.on('board:deleted', onChanged)
+    socket.on('board:access-revoked', onChanged)
 
     return () => {
-      console.log('🔴 Cleaning up dashboard Realtime')
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
-      }
+      socket.off('connect', join)
+      socket.off('dashboard:changed', onChanged)
+      socket.off('board:deleted', onChanged)
+      socket.off('board:access-revoked', onChanged)
     }
   }, [user, queryClient])
 }

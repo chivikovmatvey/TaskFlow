@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -18,7 +19,6 @@ const queryClient = new QueryClient({
   },
 })
 
-// Защищенный роут
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
   
@@ -29,7 +29,6 @@ function ProtectedRoute({ children }) {
   return children
 }
 
-// Публичный роут (только для неавторизованных)
 function PublicRoute({ children }) {
   const { user } = useAuth()
   
@@ -84,14 +83,37 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <AppRoutes />
-            <Toaster position="top-right" />
-          </div>
-        </Router>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+              <AppRoutes />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  className: '',
+                  style: {
+                    background: 'var(--toast-bg)',
+                    color: 'var(--toast-color)',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#10b981',
+                      secondary: '#fff',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                  },
+                }}
+              />
+            </div>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

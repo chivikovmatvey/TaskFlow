@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { authService } from '../services/authService'
-import { supabase } from '../services/supabaseClient'
+import { clearAuth, getStoredUser, getToken } from '../services/apiClient'
+import { disconnectSocket } from '../services/socketClient'
 
 const AuthContext = createContext({})
 
@@ -13,34 +14,55 @@ export const useAuth = () => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => getStoredUser())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    authService.getSession().then((session) => {
-      setUser(session?.user ?? null)
+    const token = getToken()
+    if (!token) {
+      setUser(null)
       setLoading(false)
-    })
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      authListener?.subscription?.unsubscribe()
+      return
     }
+    authService.getCurrentUser()
+      .then((u) => {
+        if (u) setUser(u)
+        else {
+          clearAuth()
+          setUser(null)
+        }
+      })
+      .finally(() => setLoading(false))
   }, [])
 
-  const value = {
-    user,
-    loading,
-    signUp: authService.signUp,
-    signIn: authService.signIn,
-    signOut: authService.signOut,
-  }
+  useEffect(() => {
+    const onLogout = () => {
+      setUser(null)
+      disconnectSocket()
+    }
+    window.addEventListener('auth:logout', onLogout)
+    return () => window.removeEventListener('auth:logout', onLogout)
+  }, [])
+
+  const signIn = useCallback(async (email, password) => {
+    const data = await authService.signIn(email, password)
+    setUser(data.user)
+    return data
+  }, [])
+
+  const signUp = useCallback(async (email, password, fullName) => {
+    const data = await authService.signUp(email, password, fullName)
+    setUser(data.user)
+    return data
+  }, [])
+
+  const signOut = useCallback(async () => {
+    await authService.signOut()
+    disconnectSocket()
+    setUser(null)
+  }, [])
+
+  const value = { user, loading, signIn, signUp, signOut }
 
   return (
     <AuthContext.Provider value={value}>

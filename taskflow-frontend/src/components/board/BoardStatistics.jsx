@@ -74,55 +74,77 @@ function BoardStatistics({ board }) {
   if (!stats) return null
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Статистика</h3>
-        <span className="text-sm text-gray-500">Всего задач: {stats.totalTasks}</span>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-4">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Статистика доски</h3>
+        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+          Всего задач: {stats.totalTasks}
+        </span>
       </div>
 
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">Прогресс</span>
-          <span className="font-medium text-gray-900">{stats.progressPercentage}%</span>
+      <div className="mb-6">
+        <div className="flex justify-between text-sm mb-2">
+          <span className="text-gray-700 dark:text-gray-300 font-medium">Общий прогресс выполнения</span>
+          <span className="font-bold text-green-600 dark:text-green-400">{stats.progressPercentage}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
-            className="bg-green-500 h-3 rounded-full transition-all duration-500"
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-green-400 to-green-600 h-4 rounded-full transition-all duration-500 shadow-sm"
             style={{ width: `${stats.progressPercentage}%` }}
           />
         </div>
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           {stats.completedTasks} из {stats.totalTasks} задач выполнено
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        {stats.overdue > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-            <div className="text-xs text-red-700">Просрочено</div>
-          </div>
-        )}
-        
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div className="text-2xl font-bold text-purple-600">{stats.byPriority.urgent}</div>
-          <div className="text-xs text-purple-700">Срочно</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 border-2 border-red-300 dark:border-red-700 rounded-xl p-4 shadow-sm">
+          <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">{stats.byPriority.urgent + stats.byPriority.high}</div>
+          <div className="text-sm font-medium text-red-800 dark:text-red-300">Приоритетные</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/30 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl p-4 shadow-sm">
+          <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{stats.dueToday}</div>
+          <div className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Сегодня</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 border-2 border-blue-300 dark:border-blue-700 rounded-xl p-4 shadow-sm">
+          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">{stats.dueThisWeek}</div>
+          <div className="text-sm font-medium text-blue-800 dark:text-blue-300">На этой неделе</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 border-2 border-green-300 dark:border-green-700 rounded-xl p-4 shadow-sm">
+          <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{stats.byPriority.low + stats.byPriority.medium}</div>
+          <div className="text-sm font-medium text-green-800 dark:text-green-300">Обычные</div>
         </div>
       </div>
 
-      <div>
-        <div className="text-sm font-medium text-gray-700 mb-2">Распределение по колонкам</div>
-        <div className="space-y-2">
+      {stats.overdue > 0 && (
+        <div className="mb-6 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl p-4 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium opacity-90">Просроченные задачи</div>
+              <div className="text-3xl font-bold mt-1">{stats.overdue}</div>
+            </div>
+            <div className="text-5xl opacity-30">⚠</div>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-6">
+        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Распределение по колонкам</div>
+        <div className="space-y-3">
           {stats.byColumn.map(col => (
             <div key={col.id} className="flex items-center gap-3">
-              <div className="w-24 text-xs text-gray-600 truncate">{col.title}</div>
-              <div className="flex-1 bg-gray-100 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              <div className="w-28 text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{col.title}</div>
+              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-300"
                   style={{ width: `${col.percentage}%` }}
                 />
               </div>
-              <div className="w-16 text-xs text-gray-600 text-right">
+              <div className="w-20 text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
                 {col.count} ({col.percentage}%)
               </div>
             </div>
@@ -130,21 +152,25 @@ function BoardStatistics({ board }) {
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t">
-        <div className="text-sm font-medium text-gray-700 mb-2">По приоритету</div>
-        <div className="flex flex-wrap gap-2">
-          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
-            Срочно: {stats.byPriority.urgent}
-          </span>
-          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
-            Высокий: {stats.byPriority.high}
-          </span>
-          <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">
-            Средний: {stats.byPriority.medium}
-          </span>
-          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-            Низкий: {stats.byPriority.low}
-          </span>
+      <div className="pt-4 border-t-2 border-gray-200 dark:border-gray-700">
+        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Детализация по приоритетам</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-red-600 dark:text-red-400">{stats.byPriority.urgent}</div>
+            <div className="text-xs text-red-700 dark:text-red-300 mt-1">Срочно</div>
+          </div>
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-orange-600 dark:text-orange-400">{stats.byPriority.high}</div>
+            <div className="text-xs text-orange-700 dark:text-orange-300 mt-1">Высокий</div>
+          </div>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{stats.byPriority.medium}</div>
+            <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">Средний</div>
+          </div>
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-green-600 dark:text-green-400">{stats.byPriority.low}</div>
+            <div className="text-xs text-green-700 dark:text-green-300 mt-1">Низкий</div>
+          </div>
         </div>
       </div>
     </div>

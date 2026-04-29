@@ -34,11 +34,11 @@ function BoardMembers({ boardId, isOwner }) {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'owner':
-        return <span className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-700 border border-purple-300">Владелец</span>
+        return <span className="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700">Владелец</span>
       case 'admin':
-        return <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700 border border-blue-300">Админ</span>
+        return <span className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700">Админ</span>
       case 'member':
-        return <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700 border border-green-300">Участник</span>
+        return <span className="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700">Участник</span>
       default:
         return null
     }
@@ -46,12 +46,12 @@ function BoardMembers({ boardId, isOwner }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
         <div className="animate-pulse flex items-center space-x-4">
-          <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+          <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
           <div className="flex-1">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
           </div>
         </div>
       </div>
@@ -60,8 +60,8 @@ function BoardMembers({ boardId, isOwner }) {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-        <p className="text-sm text-red-600">Ошибка загрузки участников</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
+        <p className="text-sm text-red-600 dark:text-red-400">Ошибка загрузки участников</p>
       </div>
     )
   }
@@ -72,9 +72,9 @@ function BoardMembers({ boardId, isOwner }) {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Участники ({(members?.length || 0) + 1})
           </h3>
           <button
@@ -89,17 +89,17 @@ function BoardMembers({ boardId, isOwner }) {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+          <div className="flex items-center justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-600 text-white flex items-center justify-center font-semibold">
                 {user?.email?.[0]?.toUpperCase() || 'В'}
               </div>
               <div>
-                <div className="font-medium text-gray-900">{user?.email || 'Владелец'}</div>
-                <div className="text-xs text-gray-500">Вы</div>
+                <div className="font-medium text-gray-900 dark:text-white">{user?.email || 'Владелец'}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Вы</div>
               </div>
             </div>
-            <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-medium">
+            <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded font-medium">
               Владелец
             </span>
           </div>
@@ -107,20 +107,20 @@ function BoardMembers({ boardId, isOwner }) {
           {members?.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition"
             >
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center font-semibold">
                   {member.profiles?.email?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {member.profiles?.email || 'Неизвестный пользователь'}
                     {member.user_id === user?.id && (
-                      <span className="ml-2 text-xs text-gray-500">(Вы)</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Вы)</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     Присоединился {new Date(member.invited_at || member.created_at).toLocaleDateString('ru-RU')}
                   </div>
                 </div>
@@ -132,7 +132,7 @@ function BoardMembers({ boardId, isOwner }) {
                 {member.role !== 'owner' && (
                   <button
                     onClick={() => setMemberToRemove(member)}
-                    className="p-1 text-gray-400 hover:text-red-600 rounded transition"
+                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded transition"
                     title="Удалить участника"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -27,7 +27,6 @@ function LoginPage() {
     } catch (error) {
       console.error('Login error:', error)
       
-      // Обработка различных ошибок
       if (error.message?.includes('Email not confirmed')) {
         toast.error('Пожалуйста, подтвердите email. Проверьте вашу почту.')
       } else if (error.message?.includes('Invalid login credentials')) {
@@ -43,22 +42,22 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900">
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
               Вход в TaskFlow
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Или{' '}
               <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
                 создайте новый аккаунт
               </Link>
             </p>
           </div>
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email адрес
               </label>
               <input
@@ -67,7 +66,7 @@ function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 placeholder="ivan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -76,7 +75,7 @@ function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Пароль
               </label>
               <input
@@ -85,7 +84,7 @@ function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -107,7 +106,7 @@ function LoginPage() {
           <div className="mt-6">
             <Link
               to="/"
-              className="text-sm text-center block text-gray-600 hover:text-gray-900"
+              className="text-sm text-center block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             >
               ← Вернуться на главную
             </Link>

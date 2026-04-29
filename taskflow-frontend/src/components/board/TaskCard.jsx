@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { taskService } from '../../services/taskService'
+import { labelService } from '../../services/labelService'
 import TaskModal from '../task/TaskModal'
 import ConfirmModal from '../common/ConfirmModal'
 
@@ -18,6 +19,12 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
   const { data: comments } = useQuery({
     queryKey: ['comments', task.id],
     queryFn: () => taskService.getTaskComments(task.id),
+    staleTime: 10000,
+  })
+
+  const { data: taskLabels = [] } = useQuery({
+    queryKey: ['task-labels', task.id],
+    queryFn: () => labelService.getTaskLabels(task.id),
     staleTime: 10000,
   })
 
@@ -155,11 +162,11 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 border-red-300 text-red-700'
-      case 'high': return 'bg-orange-100 border-orange-300 text-orange-700'
-      case 'medium': return 'bg-yellow-100 border-yellow-300 text-yellow-700'
-      case 'low': return 'bg-green-100 border-green-300 text-green-700'
-      default: return 'bg-gray-100 border-gray-300 text-gray-700'
+      case 'urgent': return 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+      case 'high': return 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300'
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300'
+      case 'low': return 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
+      default: return 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-300'
     }
   }
 
@@ -180,13 +187,13 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
     <>
       <div
         onClick={handleCardClick}
-        className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4 cursor-pointer border border-gray-200 group relative"
+        className="bg-white dark:bg-gray-700 rounded-lg shadow hover:shadow-md transition-shadow p-4 cursor-pointer border border-gray-200 dark:border-gray-600 group relative"
       >
         <div className="absolute top-2 right-2">
           <button
             ref={menuButtonRef}
             onClick={handleMenuClick}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-gray-600 rounded"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -194,12 +201,27 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           </button>
         </div>
 
+        {/* Labels */}
+        {taskLabels.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {taskLabels.map((label) => (
+              <span
+                key={label.id}
+                className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white"
+                style={{ backgroundColor: label.color }}
+              >
+                {label.name}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="pr-6">
-          <h4 className="font-medium text-gray-900 mb-2">{task.title}</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">{task.title}</h4>
         </div>
 
         {task.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">{task.description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{task.description}</p>
         )}
 
         <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -212,8 +234,8 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           {task.due_date && (
             <div className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
               isOverdue
-                ? 'bg-red-100 text-red-700 border border-red-300'
-                : 'bg-gray-100 text-gray-700 border border-gray-300'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700'
+                : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-500'
             }`}>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -223,8 +245,8 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           )}
         </div>
 
-        <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center text-xs text-gray-500">
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-600 flex items-center justify-between">
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -240,8 +262,8 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
             onClick={handleCommentsClick}
             className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition ${
               commentsCount > 0
-                ? 'bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100'
-                : 'bg-gray-50 text-gray-600 border border-gray-300 hover:bg-gray-100'
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                : 'bg-gray-50 dark:bg-gray-600 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500'
             }`}
             title="Открыть комментарии"
           >
@@ -256,30 +278,30 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
       {/* Menu Portal */}
       {showMenu && createPortal(
         <>
-          <div 
-            className="fixed inset-0" 
+          <div
+            className="fixed inset-0"
             onClick={() => setShowMenu(false)}
           />
-          <div 
-            className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+          <div
+            className="fixed bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[140px]"
             style={{ top: menuPosition.top, left: menuPosition.left, zIndex: 9999 }}
           >
             <button
               onClick={handleDuplicate}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               Копировать
             </button>
             <button
               onClick={handleArchive}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               Архивировать
             </button>
-            <hr className="my-1" />
+            <hr className="my-1 dark:border-gray-600" />
             <button
               onClick={handleDelete}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               Удалить
             </button>

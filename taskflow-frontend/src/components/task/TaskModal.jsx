@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { taskService } from '../../services/taskService'
+import { boardService } from '../../services/boardService'
+import { authService } from '../../services/authService'
 import { useAuth } from '../../context/AuthContext'
 import CommentItem from './CommentItem'
+import TaskAttachments from './TaskAttachments'
+import TaskChecklist from './TaskChecklist'
+import TaskLabels from './TaskLabels'
+import TaskTimeTracking from './TaskTimeTracking'
 import { boardMemberService } from '../../services/boardMemberService'
 import ConfirmModal from '../common/ConfirmModal'
 
@@ -26,6 +33,8 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     queryKey: ['comments', task.id],
     queryFn: () => taskService.getTaskComments(task.id),
     enabled: activeTab === 'comments',
+    staleTime: 0,
+    refetchOnMount: true,
   })
 
   const { data: boardMembers } = useQuery({
@@ -43,14 +52,13 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     queryKey: ['owner-email', board?.owner_id],
     queryFn: async () => {
       if (!board?.owner_id || isOwner) return null
-      const { data, error } = await supabase.rpc('get_user_email_by_id', {
-        user_id: board.owner_id
-      })
-      if (error) {
-        console.error('Error fetching owner email:', error)
+      try {
+        const u = await authService.getUserById(board.owner_id)
+        return u?.email || null
+      } catch (err) {
+        console.error('Error fetching owner email:', err)
         return null
       }
-      return data
     },
     enabled: !!board?.owner_id && !isOwner,
   })
@@ -158,31 +166,39 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [hasChanges])
 
-  return (
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    const originalPointerEvents = document.body.style.pointerEvents
+
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.pointerEvents = originalPointerEvents
+    }
+  }, [])
+
+  return createPortal(
     <>
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]"
         onClick={handleClose}
-        onPointerDown={(e) => e.stopPropagation()}
       >
         <div
-          className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 border-b">
+          <div className="p-6 border-b dark:border-gray-700">
             <div className="flex justify-between items-start">
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-bold text-gray-900 border-none outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 -mx-2 flex-1"
+                className="text-2xl font-bold text-gray-900 dark:text-white dark:bg-gray-800 border-none outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 -mx-2 flex-1"
                 placeholder="Название задачи"
               />
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600 ml-4"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ml-4"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -190,12 +206,12 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
               </button>
             </div>
 
-            <div className="flex space-x-1 mt-4 border-b">
+            <div className="flex space-x-1 mt-4 border-b dark:border-gray-700">
               <button
                 onClick={() => setActiveTab('details')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'details'
-                  ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 Детали
@@ -203,28 +219,43 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
               <button
                 onClick={() => setActiveTab('comments')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'comments'
-                  ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 Комментарии {comments?.length ? `(${comments.length})` : ''}
+              </button>
+              <button
+                onClick={() => setActiveTab('attachments')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'attachments'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Файлы
+              </button>
+              <button
+                onClick={() => setActiveTab('time')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'time'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Время
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div
-            className="flex-1 overflow-y-auto p-6"
-            onPointerDown={(e) => e.stopPropagation()}
-          >
+          <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'details' ? (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Описание</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Описание</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Добавьте описание..."
                     rows="4"
                   />
@@ -232,11 +263,11 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Приоритет</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Приоритет</label>
                     <select
                       value={priority}
                       onChange={(e) => setPriority(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="low">Низкий</option>
                       <option value="medium">Средний</option>
@@ -246,11 +277,11 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Исполнитель</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Исполнитель</label>
                     <select
                       value={assignedTo}
                       onChange={(e) => setAssignedTo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Не назначен</option>
                       {board?.owner_id && (
@@ -267,18 +298,22 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Срок выполнения</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Срок выполнения</label>
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t">
-                  <div className="text-xs text-gray-500 space-y-1">
+                <TaskLabels taskId={task.id} boardId={boardId} />
+
+                <TaskChecklist taskId={task.id} />
+
+                <div className="pt-4 border-t dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                     <div>Создано: {new Date(task.created_at).toLocaleString('ru-RU')}</div>
                     {task.updated_at && task.updated_at !== task.created_at && (
                       <div>Обновлено: {new Date(task.updated_at).toLocaleString('ru-RU')}</div>
@@ -286,14 +321,14 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'comments' ? (
               <div className="space-y-4">
-                <form onSubmit={handleAddComment} className="bg-gray-50 rounded-lg p-4">
+                <form onSubmit={handleAddComment} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Добавить комментарий..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     rows="3"
                   />
                   <div className="mt-2 flex justify-end">
@@ -318,24 +353,28 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                     <p>Пока нет комментариев</p>
                   </div>
                 )}
               </div>
-            )}
+            ) : activeTab === 'attachments' ? (
+              <TaskAttachments taskId={task.id} />
+            ) : activeTab === 'time' ? (
+              <TaskTimeTracking taskId={task.id} canEdit={isOwner || task.created_by === user?.id} />
+            ) : null}
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t bg-gray-50">
+          <div className="p-6 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
             <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                {hasChanges && <span className="text-orange-600 font-medium">Есть несохраненные изменения</span>}
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {hasChanges && <span className="text-orange-600 dark:text-orange-400 font-medium">Есть несохраненные изменения</span>}
               </div>
               <div className="flex space-x-3">
                 <button
                   onClick={handleClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition"
                 >
                   {hasChanges ? 'Отмена' : 'Закрыть'}
                 </button>
@@ -367,7 +406,8 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
         cancelText="Остаться"
         type="warning"
       />
-    </>
+    </>,
+    document.body
   )
 }
 
