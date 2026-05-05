@@ -12,6 +12,10 @@ const config = {
   options: {
     encrypt: false,
     trustServerCertificate: true,
+    cryptoCredentialsDetails: {
+      minVersion: 'TLSv1',
+      ciphers: 'DEFAULT@SECLEVEL=0',
+    },
   },
   pool: {
     max: 20,
@@ -31,7 +35,7 @@ export function getPool() {
         return pool
       })
       .catch((err) => {
-        console.error('❌ SQL Server connection failed:', err)
+        console.error(' SQL Server connection failed:', err)
         poolPromise = null
         throw err
       })

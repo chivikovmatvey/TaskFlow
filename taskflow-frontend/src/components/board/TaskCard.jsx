@@ -160,43 +160,36 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
     setDeleteConfirm(false)
   }
 
-  const getPriorityColor = (priority) => {
+  const getPriorityStyle = (priority) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
-      case 'high': return 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300'
-      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300'
-      case 'low': return 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
-      default: return 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-300'
-    }
-  }
-
-  const getPriorityLabel = (priority) => {
-    switch (priority) {
-      case 'urgent': return 'Срочно'
-      case 'high': return 'Высокий'
-      case 'low': return 'Низкий'
-      case 'medium': return 'Средний'
-      default: return ''
+      case 'urgent': return { dot: 'bg-danger', text: 'text-danger', label: 'Срочно' }
+      case 'high':   return { dot: 'bg-amber',  text: 'text-amber',  label: 'Высокий' }
+      case 'medium': return { dot: 'bg-coral',  text: 'text-coral',  label: 'Средний' }
+      case 'low':    return { dot: 'bg-teal',   text: 'text-teal',   label: 'Низкий' }
+      default: return null
     }
   }
 
   const isOverdue = task.due_date && new Date(task.due_date) < new Date()
   const commentsCount = comments?.length || 0
+  const priorityStyle = getPriorityStyle(task.priority)
 
   return (
     <>
       <div
         onClick={handleCardClick}
-        className="bg-white dark:bg-gray-700 rounded-lg shadow hover:shadow-md transition-shadow p-4 cursor-pointer border border-gray-200 dark:border-gray-600 group relative"
+        className="bg-canvas dark:bg-navy-elevated rounded-lg p-3.5 cursor-pointer border border-hairline dark:border-navy-hairline hover:border-coral/40 hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300 ease-smooth group relative"
       >
         <div className="absolute top-2 right-2">
           <button
             ref={menuButtonRef}
             onClick={handleMenuClick}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft rounded-md"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="6" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="18" r="1.5" />
             </svg>
           </button>
         </div>
@@ -207,8 +200,12 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
             {taskLabels.map((label) => (
               <span
                 key={label.id}
-                className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white"
-                style={{ backgroundColor: label.color }}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                style={{
+                  backgroundColor: `${label.color}1A`,
+                  color: label.color,
+                  border: `1px solid ${label.color}33`,
+                }}
               >
                 {label.name}
               </span>
@@ -217,60 +214,58 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
         )}
 
         <div className="pr-6">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-2">{task.title}</h4>
+          <h4 className="text-sm font-medium text-ink dark:text-canvas leading-snug mb-1.5">{task.title}</h4>
         </div>
 
         {task.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{task.description}</p>
+          <p className="text-xs text-ink-muted dark:text-ink-muted-soft line-clamp-2 mb-2.5 leading-relaxed">
+            {task.description}
+          </p>
         )}
 
-        <div className="flex items-center gap-2 flex-wrap mb-2">
-          {task.priority && (
-            <span className={`text-xs px-2 py-1 rounded border ${getPriorityColor(task.priority)}`}>
-              {getPriorityLabel(task.priority)}
-            </span>
-          )}
+        {(priorityStyle || task.due_date) && (
+          <div className="flex items-center gap-2 flex-wrap mb-2.5">
+            {priorityStyle && (
+              <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${priorityStyle.text}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
+                {priorityStyle.label}
+              </span>
+            )}
 
-          {task.due_date && (
-            <div className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-              isOverdue
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700'
-                : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-500'
-            }`}>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
-            </div>
-          )}
-        </div>
+            {task.due_date && (
+              <div className={`text-[11px] inline-flex items-center gap-1 font-medium ${
+                isOverdue ? 'text-danger' : 'text-ink-muted dark:text-ink-muted-soft'
+              }`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {new Date(task.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+              </div>
+            )}
+          </div>
+        )}
 
-        <div className="pt-2 border-t border-gray-100 dark:border-gray-600 flex items-center justify-between">
-          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <div className="pt-2.5 border-t border-hairline-soft dark:border-navy-hairline flex items-center justify-between">
+          <div className="flex items-center text-[11px] text-ink-muted-soft">
             {new Date(task.created_at).toLocaleDateString('ru-RU', {
               day: 'numeric',
               month: 'short',
-              hour: '2-digit',
-              minute: '2-digit'
             })}
           </div>
 
           <button
             onClick={handleCommentsClick}
-            className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition ${
+            className={`text-[11px] inline-flex items-center gap-1 transition-colors font-medium ${
               commentsCount > 0
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                : 'bg-gray-50 dark:bg-gray-600 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500'
+                ? 'text-coral hover:text-coral-active'
+                : 'text-ink-muted-soft hover:text-ink-body'
             }`}
             title="Открыть комментарии"
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            {commentsCount}
+            {commentsCount > 0 ? commentsCount : ''}
           </button>
         </div>
       </div>
@@ -283,25 +278,25 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
             onClick={() => setShowMenu(false)}
           />
           <div
-            className="fixed bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[140px]"
-            style={{ top: menuPosition.top, left: menuPosition.left, zIndex: 9999 }}
+            className="fixed bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-lg shadow-lift-lg py-1 min-w-[160px] animate-scaleIn"
+            style={{ top: menuPosition.top, left: menuPosition.left, zIndex: 9999, transformOrigin: 'top right' }}
           >
             <button
               onClick={handleDuplicate}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+              className="w-full px-3 py-2 text-left text-sm text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-soft hover:text-ink dark:hover:text-canvas transition-colors"
             >
               Копировать
             </button>
             <button
               onClick={handleArchive}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+              className="w-full px-3 py-2 text-left text-sm text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-soft hover:text-ink dark:hover:text-canvas transition-colors"
             >
               Архивировать
             </button>
-            <hr className="my-1 dark:border-gray-600" />
+            <div className="my-1 mx-2 h-px bg-hairline dark:bg-navy-hairline" />
             <button
               onClick={handleDelete}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger/10 transition-colors"
             >
               Удалить
             </button>

@@ -20,11 +20,8 @@ function TaskChecklist({ taskId }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items', taskId] })
       setNewItemTitle('')
-      toast.success('Пункт добавлен')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка добавления пункта')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const updateMutation = useMutation({
@@ -33,20 +30,15 @@ function TaskChecklist({ taskId }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items', taskId] })
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка обновления пункта')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: checklistService.deleteChecklistItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items', taskId] })
-      toast.success('Пункт удален')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка удаления пункта')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const toggleMutation = useMutation({
@@ -55,20 +47,17 @@ function TaskChecklist({ taskId }) {
     onMutate: async ({ itemId, isCompleted }) => {
       await queryClient.cancelQueries({ queryKey: ['checklist-items', taskId] })
       const previousItems = queryClient.getQueryData(['checklist-items', taskId])
-
       queryClient.setQueryData(['checklist-items', taskId], (old) =>
         old?.map((item) =>
           item.id === itemId ? { ...item, is_completed: isCompleted } : item
         )
       )
-
       return { previousItems }
     },
     onError: (error, variables, context) => {
       if (context?.previousItems) {
         queryClient.setQueryData(['checklist-items', taskId], context.previousItems)
       }
-      toast.error('Ошибка обновления статуса')
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items', taskId] })
@@ -81,15 +70,6 @@ function TaskChecklist({ taskId }) {
     createMutation.mutate(newItemTitle.trim())
   }
 
-  const handleToggle = (item) => {
-    toggleMutation.mutate({ itemId: item.id, isCompleted: !item.is_completed })
-  }
-
-  const handleStartEdit = (item) => {
-    setEditingId(item.id)
-    setEditingTitle(item.title)
-  }
-
   const handleSaveEdit = (itemId) => {
     if (!editingTitle.trim()) {
       setEditingId(null)
@@ -97,12 +77,7 @@ function TaskChecklist({ taskId }) {
     }
     updateMutation.mutate(
       { itemId, updates: { title: editingTitle.trim() } },
-      {
-        onSuccess: () => {
-          setEditingId(null)
-          toast.success('Пункт обновлен')
-        },
-      }
+      { onSuccess: () => setEditingId(null) }
     )
   }
 
@@ -111,36 +86,40 @@ function TaskChecklist({ taskId }) {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="mt-4">
+    <div>
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h4 className="font-medium text-gray-900 dark:text-white">
-            Чек-лист ({completedCount}/{totalCount})
+        <div className="flex items-baseline gap-2">
+          <h4 className="font-display text-lg tracking-display-md text-ink dark:text-canvas">
+            Чек-лист
           </h4>
-          {totalCount > 0 && (
-            <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
+          <span className="text-xs tabular-nums text-ink-muted dark:text-ink-muted-soft font-medium">
+            {completedCount}/{totalCount}
+          </span>
         </div>
       </div>
 
+      {totalCount > 0 && (
+        <div className="h-1 bg-canvas-soft dark:bg-navy-soft rounded-full overflow-hidden mb-3">
+          <div
+            className="h-full bg-coral transition-all duration-500 ease-smooth"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
       <form onSubmit={handleAddItem} className="mb-3">
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <input
             type="text"
             value={newItemTitle}
             onChange={(e) => setNewItemTitle(e.target.value)}
             placeholder="Добавить пункт..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 text-sm bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring"
           />
           <button
             type="submit"
             disabled={!newItemTitle.trim() || createMutation.isPending}
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
+            className="px-4 py-2 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Добавить
           </button>
@@ -148,24 +127,31 @@ function TaskChecklist({ taskId }) {
       </form>
 
       {isLoading ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400">Загрузка...</div>
+        <div className="text-center py-4 text-sm text-ink-muted-soft animate-shimmer">Загрузка</div>
       ) : items.length === 0 ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-          Нет пунктов в чек-листе
-        </div>
+        <div className="text-center py-4 text-sm text-ink-muted-soft">Нет пунктов</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-0.5">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg group"
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-canvas-soft dark:hover:bg-navy-soft rounded-md group transition-colors"
             >
-              <input
-                type="checkbox"
-                checked={item.is_completed}
-                onChange={() => handleToggle(item)}
-                className="w-4 h-4 text-blue-600 dark:text-blue-500 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              />
+              <button
+                type="button"
+                onClick={() => toggleMutation.mutate({ itemId: item.id, isCompleted: !item.is_completed })}
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                  item.is_completed
+                    ? 'bg-coral border-coral'
+                    : 'border-hairline dark:border-navy-hairline hover:border-coral'
+                }`}
+              >
+                {item.is_completed && (
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
               {editingId === item.id ? (
                 <input
                   type="text"
@@ -176,16 +162,19 @@ function TaskChecklist({ taskId }) {
                     if (e.key === 'Enter') handleSaveEdit(item.id)
                     if (e.key === 'Escape') setEditingId(null)
                   }}
-                  className="flex-1 px-2 py-1 text-sm border border-blue-500 dark:border-blue-400 dark:bg-gray-700 dark:text-white rounded focus:outline-none"
+                  className="flex-1 px-2 py-1 text-sm bg-canvas dark:bg-navy-elevated border border-coral rounded-md text-ink dark:text-canvas focus-ring"
                   autoFocus
                 />
               ) : (
                 <span
-                  onClick={() => handleStartEdit(item)}
+                  onClick={() => {
+                    setEditingId(item.id)
+                    setEditingTitle(item.title)
+                  }}
                   className={`flex-1 text-sm cursor-pointer ${
                     item.is_completed
-                      ? 'line-through text-gray-500 dark:text-gray-400'
-                      : 'text-gray-900 dark:text-white'
+                      ? 'line-through text-ink-muted-soft'
+                      : 'text-ink dark:text-canvas'
                   }`}
                 >
                   {item.title}
@@ -194,16 +183,11 @@ function TaskChecklist({ taskId }) {
               <button
                 onClick={() => deleteMutation.mutate(item.id)}
                 disabled={deleteMutation.isPending}
-                className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition"
+                className="opacity-0 group-hover:opacity-100 p-1 text-ink-muted-soft hover:text-danger rounded transition-all"
                 title="Удалить"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>

@@ -4,9 +4,9 @@ import toast from 'react-hot-toast'
 import { labelService } from '../../services/labelService'
 
 const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
-  '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
-  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#64748b'
+  '#cc785c', '#a9583e', '#e8a55a', '#d4a017', '#5db872', '#5db8a6',
+  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#c64545',
+  '#64748b', '#374151', '#0d9488', '#7c3aed', '#db2777', '#f97316',
 ]
 
 function TaskLabels({ taskId, boardId }) {
@@ -30,22 +30,16 @@ function TaskLabels({ taskId, boardId }) {
     mutationFn: (labelId) => labelService.addLabelToTask(taskId, labelId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-labels', taskId] })
-      toast.success('Метка добавлена')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка добавления метки')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const removeLabelMutation = useMutation({
     mutationFn: (labelId) => labelService.removeLabelFromTask(taskId, labelId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-labels', taskId] })
-      toast.success('Метка удалена')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка удаления метки')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const createLabelMutation = useMutation({
@@ -58,9 +52,7 @@ function TaskLabels({ taskId, boardId }) {
       setShowCreateLabel(false)
       toast.success('Метка создана')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка создания метки')
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const handleCreateLabel = (e) => {
@@ -71,43 +63,45 @@ function TaskLabels({ taskId, boardId }) {
 
   const handleToggleLabel = (label) => {
     const isAdded = taskLabels.some(tl => tl.id === label.id)
-    if (isAdded) {
-      removeLabelMutation.mutate(label.id)
-    } else {
-      addLabelMutation.mutate(label.id)
-    }
+    if (isAdded) removeLabelMutation.mutate(label.id)
+    else addLabelMutation.mutate(label.id)
   }
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Метки</h4>
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft">
+          Метки
+        </h4>
         <button
           onClick={() => setShowLabelMenu(!showLabelMenu)}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+          className="text-xs font-medium text-coral hover:text-coral-active transition-colors"
         >
           {showLabelMenu ? 'Закрыть' : 'Управление'}
         </button>
       </div>
 
-      {/* Display current labels */}
-      <div className="flex flex-wrap gap-2 mb-2">
+      <div className="flex flex-wrap gap-1.5 mb-2">
         {taskLabels.length === 0 ? (
-          <span className="text-sm text-gray-500 dark:text-gray-400">Нет меток</span>
+          <span className="text-sm text-ink-muted-soft">Нет меток</span>
         ) : (
           taskLabels.map((label) => (
             <span
               key={label.id}
-              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: label.color }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium animate-scaleIn"
+              style={{
+                backgroundColor: `${label.color}1A`,
+                color: label.color,
+                border: `1px solid ${label.color}55`,
+              }}
             >
               {label.name}
               <button
                 onClick={() => removeLabelMutation.mutate(label.id)}
-                className="ml-1.5 hover:bg-black hover:bg-opacity-20 rounded-full p-0.5"
+                className="hover:bg-black/10 rounded-full p-0.5 -mr-1 transition-colors"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </span>
@@ -115,29 +109,28 @@ function TaskLabels({ taskId, boardId }) {
         )}
       </div>
 
-      {/* Label management menu */}
       {showLabelMenu && (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2">
+        <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-3 space-y-2 animate-slideUp">
           {boardLabels.length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {boardLabels.map((label) => {
                 const isAdded = taskLabels.some(tl => tl.id === label.id)
                 return (
                   <button
                     key={label.id}
                     onClick={() => handleToggleLabel(label)}
-                    className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                    className="w-full flex items-center justify-between p-2 rounded-md hover:bg-canvas dark:hover:bg-navy-elevated transition-colors"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                       <div
-                        className="w-4 h-4 rounded"
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: label.color }}
                       />
-                      <span className="text-sm dark:text-white">{label.name}</span>
+                      <span className="text-sm text-ink dark:text-canvas">{label.name}</span>
                     </div>
                     {isAdded && (
-                      <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg className="w-4 h-4 text-coral" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </button>
@@ -147,31 +140,36 @@ function TaskLabels({ taskId, boardId }) {
           )}
 
           {showCreateLabel ? (
-            <form onSubmit={handleCreateLabel} className="space-y-2 pt-2 border-t dark:border-gray-600">
+            <form onSubmit={handleCreateLabel} className="space-y-2 pt-2 border-t border-hairline dark:border-navy-hairline animate-fadeIn">
               <input
                 type="text"
                 value={newLabelName}
                 onChange={(e) => setNewLabelName(e.target.value)}
                 placeholder="Название метки"
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring"
                 autoFocus
               />
-              <div className="grid grid-cols-9 gap-1">
+              <div className="grid grid-cols-9 gap-1.5">
                 {PRESET_COLORS.map((color) => (
                   <button
                     key={color}
                     type="button"
                     onClick={() => setNewLabelColor(color)}
-                    className={`w-6 h-6 rounded ${newLabelColor === color ? 'ring-2 ring-offset-2 dark:ring-offset-gray-700 ring-blue-500 dark:ring-blue-400' : ''}`}
-                    style={{ backgroundColor: color }}
+                    className={`w-6 h-6 rounded-md transition-all duration-200 ${
+                      newLabelColor === color ? 'ring-2 ring-offset-2 ring-offset-canvas-soft dark:ring-offset-navy-soft scale-110' : 'hover:scale-110'
+                    }`}
+                    style={{
+                      backgroundColor: color,
+                      ...(newLabelColor === color ? { '--tw-ring-color': color } : {}),
+                    }}
                   />
                 ))}
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <button
                   type="submit"
                   disabled={!newLabelName.trim() || createLabelMutation.isPending}
-                  className="flex-1 px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
+                  className="flex-1 px-3 py-1.5 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
                 >
                   Создать
                 </button>
@@ -181,7 +179,7 @@ function TaskLabels({ taskId, boardId }) {
                     setShowCreateLabel(false)
                     setNewLabelName('')
                   }}
-                  className="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+                  className="px-3 py-1.5 text-ink-body dark:text-ink-muted text-sm font-medium rounded-md hover:bg-canvas dark:hover:bg-navy-elevated transition-colors"
                 >
                   Отмена
                 </button>
@@ -190,9 +188,12 @@ function TaskLabels({ taskId, boardId }) {
           ) : (
             <button
               onClick={() => setShowCreateLabel(true)}
-              className="w-full px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 rounded-lg transition"
+              className="w-full px-3 py-2 text-sm text-coral hover:bg-coral-soft rounded-md transition-colors flex items-center gap-2 group"
             >
-              + Создать новую метку
+              <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Создать метку
             </button>
           )}
         </div>

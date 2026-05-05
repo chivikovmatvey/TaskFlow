@@ -32,111 +32,109 @@ function BoardMembers({ boardId, isOwner }) {
   })
 
   const getRoleBadge = (role) => {
-    switch (role) {
-      case 'owner':
-        return <span className="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700">Владелец</span>
-      case 'admin':
-        return <span className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700">Админ</span>
-      case 'member':
-        return <span className="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700">Участник</span>
-      default:
-        return null
+    const styles = {
+      owner: 'bg-coral-soft text-coral border-coral/30',
+      admin: 'bg-canvas-card dark:bg-navy-elevated text-ink-body dark:text-ink-muted border-hairline dark:border-navy-hairline',
+      member: 'bg-canvas-card dark:bg-navy-elevated text-ink-muted dark:text-ink-muted-soft border-hairline dark:border-navy-hairline',
     }
+    const labels = { owner: 'Владелец', admin: 'Админ', member: 'Участник' }
+    if (!labels[role]) return null
+    return (
+      <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${styles[role]}`}>
+        {labels[role]}
+      </span>
+    )
   }
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
-        <div className="animate-pulse flex items-center space-x-4">
-          <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-          <div className="flex-1">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-          </div>
-        </div>
+      <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-3 mb-3 animate-shimmer">
+        <div className="h-12" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
-        <p className="text-sm text-red-600 dark:text-red-400">Ошибка загрузки участников</p>
+      <div className="bg-danger/5 border border-danger/30 rounded-lg p-3 mb-3">
+        <p className="text-sm text-danger">Ошибка загрузки участников</p>
       </div>
     )
   }
 
-  if (!isOwner) {
-    return null
-  }
+  if (!isOwner) return null
+
+  const totalMembers = (members?.length || 0) + 1
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Участники ({(members?.length || 0) + 1})
-          </h3>
+      <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-4 mb-3">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-baseline gap-2">
+            <h3 className="font-display text-lg tracking-display-md text-ink dark:text-canvas">
+              Участники
+            </h3>
+            <span className="text-xs tabular-nums text-ink-muted dark:text-ink-muted-soft font-medium">
+              {totalMembers}
+            </span>
+          </div>
           <button
             onClick={() => setShowInviteModal(true)}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center gap-1"
+            className="px-3 py-1.5 bg-coral text-white text-xs font-medium rounded-md hover:bg-coral-active transition-colors flex items-center gap-1.5 shadow-coral"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Пригласить
           </button>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-600 text-white flex items-center justify-center font-semibold">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between p-2 bg-canvas dark:bg-navy-elevated rounded-md border border-hairline dark:border-navy-hairline">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center font-semibold text-sm">
                 {user?.email?.[0]?.toUpperCase() || 'В'}
               </div>
               <div>
-                <div className="font-medium text-gray-900 dark:text-white">{user?.email || 'Владелец'}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Вы</div>
+                <div className="text-sm font-medium text-ink dark:text-canvas">{user?.email || 'Владелец'}</div>
+                <div className="text-[11px] text-ink-muted-soft">Вы</div>
               </div>
             </div>
-            <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded font-medium">
-              Владелец
-            </span>
+            {getRoleBadge('owner')}
           </div>
 
           {members?.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+              className="flex items-center justify-between p-2 bg-canvas dark:bg-navy-elevated rounded-md border border-hairline dark:border-navy-hairline hover:border-coral/40 transition-colors duration-200"
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center font-semibold">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-canvas-card dark:bg-navy-soft border border-hairline dark:border-navy-hairline text-ink-body dark:text-ink-muted flex items-center justify-center font-semibold text-sm">
                   {member.profiles?.email?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {member.profiles?.email || 'Неизвестный пользователь'}
+                  <div className="text-sm font-medium text-ink dark:text-canvas">
+                    {member.profiles?.email || 'Неизвестный'}
                     {member.user_id === user?.id && (
-                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Вы)</span>
+                      <span className="ml-2 text-[11px] text-ink-muted-soft">(Вы)</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Присоединился {new Date(member.invited_at || member.created_at).toLocaleDateString('ru-RU')}
+                  <div className="text-[11px] text-ink-muted-soft">
+                    {new Date(member.invited_at || member.created_at).toLocaleDateString('ru-RU')}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 {getRoleBadge(member.role)}
-
                 {member.role !== 'owner' && (
                   <button
                     onClick={() => setMemberToRemove(member)}
-                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded transition"
+                    className="p-1 text-ink-muted-soft hover:text-danger rounded transition-colors"
                     title="Удалить участника"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 )}

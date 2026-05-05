@@ -11,11 +11,12 @@ export const boardService = {
     return data
   },
 
-  async createBoard(title, description, backgroundColor = '#3b82f6') {
+  async createBoard(title, description, backgroundColor = '#3b82f6', sectionId = null) {
     const { data } = await apiClient.post('/boards', {
       title,
       description,
       background_color: backgroundColor,
+      section_id: sectionId,
     })
     return data
   },

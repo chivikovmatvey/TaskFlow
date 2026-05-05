@@ -109,28 +109,29 @@ function TaskAttachments({ taskId }) {
   }
 
   const getFileIcon = (fileType) => {
+    const baseClasses = "w-4 h-4"
     if (fileType.startsWith('image/')) {
       return (
-        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <svg className={`${baseClasses} text-coral`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       )
     } else if (fileType.startsWith('video/')) {
       return (
-        <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        <svg className={`${baseClasses} text-amber`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )
     } else if (fileType.includes('pdf')) {
       return (
-        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        <svg className={`${baseClasses} text-danger`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       )
     }
     return (
-      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <svg className={`${baseClasses} text-ink-muted dark:text-ink-muted-soft`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     )
   }
@@ -182,126 +183,123 @@ function TaskAttachments({ taskId }) {
   }
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-gray-900 dark:text-white">Вложения ({attachments.length})</h4>
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileSelect}
-            disabled={uploading}
-            style={{ display: 'none' }}
-            accept="*/*"
-          />
-          <button
-            onClick={() => {
-              console.log('Button clicked, uploading:', uploading, 'fileInputRef:', fileInputRef.current)
-              if (!uploading && fileInputRef.current) {
-                console.log('Triggering file input click')
-                fileInputRef.current.click()
-              }
-            }}
-            disabled={uploading}
-            type="button"
-            className="flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>{uploading ? 'Загрузка...' : 'Добавить файл'}</span>
-          </button>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-baseline gap-2">
+          <h4 className="font-display text-lg tracking-display-md text-ink dark:text-canvas">
+            Вложения
+          </h4>
+          <span className="text-xs tabular-nums text-ink-muted dark:text-ink-muted-soft font-medium">
+            {attachments.length}
+          </span>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          disabled={uploading}
+          style={{ display: 'none' }}
+          accept="*/*"
+        />
+        <button
+          onClick={() => {
+            if (!uploading && fileInputRef.current) fileInputRef.current.click()
+          }}
+          disabled={uploading}
+          type="button"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-coral hover:bg-coral-active text-white rounded-md shadow-coral transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          {uploading ? 'Загрузка...' : 'Добавить файл'}
+        </button>
       </div>
 
       {/* Drag and Drop Zone */}
       <div
-        onClick={(e) => {
-          e.preventDefault()
-          if (!uploading && fileInputRef.current) {
-            fileInputRef.current.click()
-          }
+        onClick={() => {
+          if (!uploading && fileInputRef.current) fileInputRef.current.click()
         }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
-        className={`mb-4 border-2 border-dashed rounded-lg p-6 text-center transition ${
+        className={`mb-4 border border-dashed rounded-lg p-8 text-center transition-all duration-300 ease-smooth ${
           dragActive
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+            ? 'border-coral bg-coral-soft scale-[1.01]'
+            : 'border-hairline dark:border-navy-hairline hover:border-coral/50'
         } ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
-        <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        <svg className={`mx-auto h-10 w-10 transition-colors ${dragActive ? 'text-coral' : 'text-ink-muted-soft'}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-3 text-sm text-ink-body dark:text-ink-muted">
           {dragActive ? (
-            <span className="font-medium text-blue-600 dark:text-blue-400">Отпустите файлы для загрузки</span>
+            <span className="font-medium text-coral">Отпустите для загрузки</span>
           ) : (
             <>
-              <span className="font-medium text-blue-600 dark:text-blue-400">Нажмите для выбора</span> или перетащите файлы сюда
+              <span className="font-medium text-coral">Нажмите для выбора</span>
+              <span className="text-ink-muted dark:text-ink-muted-soft"> или перетащите файлы сюда</span>
             </>
           )}
         </p>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Максимальный размер файла: 10 МБ</p>
+        <p className="mt-1 text-[11px] text-ink-muted-soft">До 10 МБ</p>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400">Загрузка...</div>
+        <div className="text-center py-4 text-sm text-ink-muted-soft animate-shimmer">Загрузка</div>
       ) : attachments.length === 0 ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-          Нет вложений
-        </div>
+        <div className="text-center py-4 text-sm text-ink-muted-soft">Нет вложений</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition group"
+              className="flex items-center justify-between p-3 bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-md hover:border-coral/40 transition-colors group"
             >
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 {getFileIcon(attachment.file_type)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-ink dark:text-canvas truncate">
                     {attachment.file_name}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatFileSize(attachment.file_size)} • {new Date(attachment.created_at).toLocaleDateString('ru-RU')}
+                  <p className="text-[11px] text-ink-muted-soft mt-0.5">
+                    {formatFileSize(attachment.file_size)} · {new Date(attachment.created_at).toLocaleDateString('ru-RU')}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-1">
                 {canPreview(attachment.file_type) && (
                   <button
                     onClick={() => handlePreview(attachment)}
-                    className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition"
+                    className="p-1.5 text-ink-muted dark:text-ink-muted-soft hover:text-coral rounded transition-colors"
                     title="Предпросмотр"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   </button>
                 )}
                 <button
                   onClick={() => attachmentService.downloadFile(attachment.file_path, attachment.file_name, attachment.id)}
-                  className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition"
+                  className="p-1.5 text-ink-muted dark:text-ink-muted-soft hover:text-coral rounded transition-colors"
                   title="Скачать"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                 </button>
                 <button
                   onClick={() => deleteMutation.mutate({ attachmentId: attachment.id, filePath: attachment.file_path })}
                   disabled={deleteMutation.isPending}
-                  className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition"
+                  className="p-1.5 text-ink-muted dark:text-ink-muted-soft hover:text-danger rounded transition-colors"
                   title="Удалить"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>

@@ -79,17 +79,18 @@ router.get('/:id/permissions', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { title, description, background_color } = req.body
+    const { title, description, background_color, section_id } = req.body
     if (!title) return res.status(400).json({ error: 'Название обязательно' })
     const result = await query(
-      `INSERT INTO dbo.boards (title, description, background_color, owner_id)
+      `INSERT INTO dbo.boards (title, description, background_color, owner_id, section_id)
        OUTPUT INSERTED.*
-       VALUES (@title, @description, @bg, @ownerId)`,
+       VALUES (@title, @description, @bg, @ownerId, @sid)`,
       {
         title,
         description: description || null,
         bg: background_color || '#3b82f6',
         ownerId: req.user.id,
+        sid: section_id || null,
       }
     )
     const board = result.recordset[0]
@@ -116,12 +117,14 @@ router.patch('/:id', async (req, res) => {
   try {
     const access = await getBoardAccess(req.params.id, req.user.id)
     if (!access?.isOwner) return res.status(403).json({ error: 'Только владелец может изменять' })
-    const { title, description, background_color } = req.body
+    const { title, description, background_color, section_id } = req.body
+    const sectionSet = 'section_id' in req.body ? 1 : 0
     const result = await query(
       `UPDATE dbo.boards SET
          title = COALESCE(@title, title),
          description = COALESCE(@description, description),
          background_color = COALESCE(@bg, background_color),
+         section_id = CASE WHEN @sectionSet = 1 THEN @sid ELSE section_id END,
          updated_at = SYSDATETIMEOFFSET()
        OUTPUT INSERTED.*
        WHERE id = @id`,
@@ -130,6 +133,8 @@ router.patch('/:id', async (req, res) => {
         title: title ?? null,
         description: description ?? null,
         bg: background_color ?? null,
+        sid: section_id ?? null,
+        sectionSet,
       }
     )
     const memberIds = await getBoardMemberIds(req.params.id)

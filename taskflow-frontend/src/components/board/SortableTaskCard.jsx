@@ -17,7 +17,7 @@ function SortableTaskCard({ task, boardId, onModalStateChange }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
   }
 
   return (
@@ -26,10 +26,11 @@ function SortableTaskCard({ task, boardId, onModalStateChange }) {
       style={style}
       {...attributes}
       {...listeners}
+      className="stagger-card"
     >
-      <TaskCard 
-        task={task} 
-        boardId={boardId} 
+      <TaskCard
+        task={task}
+        boardId={boardId}
         isDragging={isDragging}
         onModalStateChange={onModalStateChange}
       />

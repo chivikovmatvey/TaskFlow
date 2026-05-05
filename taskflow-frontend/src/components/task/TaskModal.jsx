@@ -176,98 +176,89 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
     }
   }, [])
 
+  const tabs = [
+    { value: 'details', label: 'Детали' },
+    { value: 'comments', label: `Комментарии${comments?.length ? ` · ${comments.length}` : ''}` },
+    { value: 'attachments', label: 'Файлы' },
+    { value: 'time', label: 'Время' },
+  ]
+
+  const inputClass = "w-full px-3 py-2 bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring text-sm"
+  const labelClass = "block text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2"
+
   return createPortal(
     <>
       <div
-        className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]"
+        className="modal-overlay fixed inset-0 flex items-center justify-center p-4 z-[60] animate-fadeIn"
+        style={{ backgroundColor: 'var(--bg-overlay)' }}
         onClick={handleClose}
       >
         <div
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl h-[90vh] overflow-hidden flex flex-col"
+          className="bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-xl shadow-lift-lg w-full max-w-4xl h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 border-b dark:border-gray-700">
-            <div className="flex justify-between items-start">
+          <div className="p-6 border-b border-hairline dark:border-navy-hairline">
+            <div className="flex justify-between items-start gap-4">
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-bold text-gray-900 dark:text-white dark:bg-gray-800 border-none outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 -mx-2 flex-1"
+                className="font-display text-3xl tracking-display-md text-ink dark:text-canvas bg-transparent border-none outline-none focus-ring rounded-md px-2 -mx-2 flex-1 leading-tight"
                 placeholder="Название задачи"
               />
               <button
                 onClick={handleClose}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ml-4"
+                className="text-ink-muted-soft hover:text-ink dark:hover:text-canvas transition-colors p-1 -m-1 flex-shrink-0"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="flex space-x-1 mt-4 border-b dark:border-gray-700">
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'details'
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+            <div className="flex gap-1 mt-5 -mb-px">
+              {tabs.map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => setActiveTab(t.value)}
+                  className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+                    activeTab === t.value
+                      ? 'text-coral'
+                      : 'text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas'
                   }`}
-              >
-                Детали
-              </button>
-              <button
-                onClick={() => setActiveTab('comments')}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'comments'
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-              >
-                Комментарии {comments?.length ? `(${comments.length})` : ''}
-              </button>
-              <button
-                onClick={() => setActiveTab('attachments')}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'attachments'
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-              >
-                Файлы
-              </button>
-              <button
-                onClick={() => setActiveTab('time')}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === 'time'
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-              >
-                Время
-              </button>
+                >
+                  {t.label}
+                  {activeTab === t.value && (
+                    <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-coral animate-fadeIn" />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin animate-fadeIn">
             {activeTab === 'details' ? (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Описание</label>
+                  <label className={labelClass}>Описание</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`${inputClass} resize-none`}
                     placeholder="Добавьте описание..."
                     rows="4"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Приоритет</label>
+                    <label className={labelClass}>Приоритет</label>
                     <select
                       value={priority}
                       onChange={(e) => setPriority(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`${inputClass} cursor-pointer`}
                     >
                       <option value="low">Низкий</option>
                       <option value="medium">Средний</option>
@@ -277,11 +268,11 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Исполнитель</label>
+                    <label className={labelClass}>Исполнитель</label>
                     <select
                       value={assignedTo}
                       onChange={(e) => setAssignedTo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`${inputClass} cursor-pointer`}
                     >
                       <option value="">Не назначен</option>
                       {board?.owner_id && (
@@ -298,12 +289,12 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Срок выполнения</label>
+                    <label className={labelClass}>Срок</label>
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -312,8 +303,8 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
 
                 <TaskChecklist taskId={task.id} />
 
-                <div className="pt-4 border-t dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                <div className="pt-4 border-t border-hairline dark:border-navy-hairline">
+                  <div className="text-[11px] text-ink-muted-soft space-y-0.5">
                     <div>Создано: {new Date(task.created_at).toLocaleString('ru-RU')}</div>
                     {task.updated_at && task.updated_at !== task.created_at && (
                       <div>Обновлено: {new Date(task.updated_at).toLocaleString('ru-RU')}</div>
@@ -323,19 +314,19 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
               </div>
             ) : activeTab === 'comments' ? (
               <div className="space-y-4">
-                <form onSubmit={handleAddComment} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <form onSubmit={handleAddComment} className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-4">
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Добавить комментарий..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring resize-none text-sm"
                     rows="3"
                   />
                   <div className="mt-2 flex justify-end">
                     <button
                       type="submit"
                       disabled={!newComment.trim() || addCommentMutation.isPending}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                      className="px-4 py-2 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md shadow-coral transition-all duration-200 disabled:opacity-50 hover:scale-[1.02]"
                     >
                       {addCommentMutation.isPending ? 'Отправка...' : 'Добавить'}
                     </button>
@@ -343,18 +334,16 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                 </form>
 
                 {commentsLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  </div>
+                  <div className="text-center py-8 text-sm text-ink-muted-soft animate-shimmer">Загрузка</div>
                 ) : comments && comments.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {comments.map((comment) => (
                       <CommentItem key={comment.id} comment={comment} taskId={task.id} currentUserId={user?.id} />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <p>Пока нет комментариев</p>
+                  <div className="text-center py-12 text-sm text-ink-muted-soft">
+                    Пока нет комментариев
                   </div>
                 )}
               </div>
@@ -366,28 +355,31 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {hasChanges && <span className="text-orange-600 dark:text-orange-400 font-medium">Есть несохраненные изменения</span>}
-              </div>
-              <div className="flex space-x-3">
+          <div className="p-4 border-t border-hairline dark:border-navy-hairline bg-canvas-soft dark:bg-navy-soft flex justify-between items-center">
+            <div className="text-xs">
+              {hasChanges && (
+                <span className="inline-flex items-center gap-1.5 text-coral font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-coral animate-shimmer" />
+                  Несохранённые изменения
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 text-sm font-medium text-ink-body dark:text-ink-muted hover:bg-canvas dark:hover:bg-navy-elevated rounded-md transition-colors"
+              >
+                {hasChanges ? 'Отмена' : 'Закрыть'}
+              </button>
+              {activeTab === 'details' && (
                 <button
-                  onClick={handleClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition"
+                  onClick={handleSave}
+                  disabled={updateTaskMutation.isPending || !hasChanges}
+                  className="px-4 py-2 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md shadow-coral transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
                 >
-                  {hasChanges ? 'Отмена' : 'Закрыть'}
+                  {updateTaskMutation.isPending ? 'Сохранение...' : 'Сохранить'}
                 </button>
-                {activeTab === 'details' && (
-                  <button
-                    onClick={handleSave}
-                    disabled={updateTaskMutation.isPending || !hasChanges}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
-                  >
-                    {updateTaskMutation.isPending ? 'Сохранение...' : 'Сохранить'}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -25,15 +25,15 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # ── 1. Docker-контейнер SQL Server ───────────────────────────────
-info "Проверяю контейнер sqlserver..."
+info "Проверка контейнера sqlserver..."
 if ! docker ps --format '{{.Names}}' | grep -q '^sqlserver$'; then
   if docker ps -a --format '{{.Names}}' | grep -q '^sqlserver$'; then
-    info "Запускаю контейнер sqlserver..."
+    info "Запуск контейнера sqlserver..."
     docker start sqlserver
     sleep 3
     ok "Контейнер sqlserver запущен"
   else
-    error "Контейнер sqlserver не найден. Создайте его вручную."
+    error "Контейнер sqlserver не найден"
     exit 1
   fi
 else
@@ -42,20 +42,20 @@ fi
 
 # ── 2. Установка зависимостей (только если node_modules отсутствует) ──
 if [[ ! -d "$ROOT/taskflow-backend/node_modules" ]]; then
-  info "Устанавливаю зависимости бэкенда..."
+  info "Установка зависимости бэкенда..."
   npm install --prefix "$ROOT/taskflow-backend" --silent
 fi
 if [[ ! -d "$ROOT/taskflow-frontend/node_modules" ]]; then
-  info "Устанавливаю зависимости фронтенда..."
+  info "Устанока зависимости фронтенда..."
   npm install --prefix "$ROOT/taskflow-frontend" --silent
 fi
 
 # ── 3. Бэкенд ───────────────────────────────────────────────────
-info "Запускаю бэкенд..."
+info "Запуск бэкенда..."
 npm run dev --prefix "$ROOT/taskflow-backend" > /tmp/taskflow-backend.log 2>&1 &
 BACKEND_PID=$!
 
-info "Жду готовности бэкенда..."
+info "Ожидание готовности бэкенда..."
 for i in $(seq 1 30); do
   if curl -sf "$BACKEND_URL/api/health" > /dev/null 2>&1; then
     ok "Бэкенд готов ($BACKEND_URL)"
@@ -70,11 +70,11 @@ for i in $(seq 1 30); do
 done
 
 # ── 4. Фронтенд ──────────────────────────────────────────────────
-info "Запускаю фронтенд..."
+info "Запуск фронтенда..."
 npm run dev --prefix "$ROOT/taskflow-frontend" > /tmp/taskflow-frontend.log 2>&1 &
 FRONTEND_PID=$!
 
-info "Жду готовности фронтенда..."
+info "Ожидание готовности фронтенда..."
 for i in $(seq 1 30); do
   if curl -sf "$FRONTEND_URL" > /dev/null 2>&1; then
     ok "Фронтенд готов ($FRONTEND_URL)"
@@ -90,8 +90,7 @@ done
 
 # ── 5. Открыть браузер ───────────────────────────────────────────
 sleep "$BROWSER_WAIT"
-info "Открываю браузер..."
-xdg-open "$FRONTEND_URL" 2>/dev/null || warn "Не удалось открыть браузер автоматически. Открой: $FRONTEND_URL"
+xdg-open "$FRONTEND_URL" 2>/dev/null || warn "Не удалось открыть браузер автоматически: $FRONTEND_URL"
 
 # ── 6. Дежурный режим ────────────────────────────────────────────
 echo ""
@@ -101,7 +100,7 @@ echo -e "  Фронтенд:   ${CYAN}$FRONTEND_URL${NC}"
 echo -e "  Бэкенд:     ${CYAN}$BACKEND_URL${NC}"
 echo -e "  Логи:       /tmp/taskflow-backend.log"
 echo -e "              /tmp/taskflow-frontend.log"
-echo -e "${GREEN}  Нажми Ctrl+C для остановки${NC}"
+echo -e "${GREEN}      Ctrl+C для остановки${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 wait

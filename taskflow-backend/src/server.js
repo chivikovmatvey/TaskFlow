@@ -13,6 +13,10 @@ import labelRoutes from './routes/labels.js'
 import checklistRoutes from './routes/checklists.js'
 import timeRoutes from './routes/timeTracking.js'
 import attachmentRoutes from './routes/attachments.js'
+import sectionRoutes from './routes/sections.js'
+import insightsRoutes from './routes/insights.js'
+import telegramRoutes from './routes/telegram.js'
+import { initTelegram } from './telegram.js'
 
 dotenv.config()
 
@@ -37,6 +41,9 @@ app.use('/api/labels', labelRoutes)
 app.use('/api/checklists', checklistRoutes)
 app.use('/api/time-tracking', timeRoutes)
 app.use('/api/attachments', attachmentRoutes)
+app.use('/api/sections', sectionRoutes)
+app.use('/api/insights', insightsRoutes)
+app.use('/api/telegram', telegramRoutes)
 
 app.use((err, req, res, _next) => {
   console.error('Unhandled error:', err)
@@ -49,6 +56,7 @@ initRealtime(server)
 
 getPool()
   .then(() => {
+    initTelegram()
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`)
     })

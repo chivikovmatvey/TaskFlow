@@ -11,10 +11,7 @@ function TaskTimeTracking({ taskId, canEdit }) {
   const [currentTimer, setCurrentTimer] = useState(null)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [showManualForm, setShowManualForm] = useState(false)
-  const [manualEntry, setManualEntry] = useState({
-    duration: '',
-    notes: ''
-  })
+  const [manualEntry, setManualEntry] = useState({ duration: '', notes: '' })
 
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-tracking', taskId],
@@ -58,9 +55,7 @@ function TaskTimeTracking({ taskId, canEdit }) {
       toast.success('Таймер запущен')
       queryClient.invalidateQueries({ queryKey: ['time-tracking', taskId] })
     },
-    onError: (error) => {
-      toast.error((error.message || 'Ошибка запуска таймера'))
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const stopTimerMutation = useMutation({
@@ -73,40 +68,27 @@ function TaskTimeTracking({ taskId, canEdit }) {
       queryClient.invalidateQueries({ queryKey: ['time-tracking', taskId] })
       queryClient.invalidateQueries({ queryKey: ['total-time', taskId] })
     },
-    onError: (error) => {
-      toast.error((error.message || 'Ошибка остановки таймера'))
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const addManualEntryMutation = useMutation({
     mutationFn: () => {
       const timeParts = manualEntry.duration.split(':')
-      if (timeParts.length !== 2) {
-        throw new Error('Неверный формат времени. Используйте ЧЧ:ММ')
-      }
+      if (timeParts.length !== 2) throw new Error('Формат: ЧЧ:ММ')
       const hours = parseInt(timeParts[0], 10)
       const minutes = parseInt(timeParts[1], 10)
-      if (isNaN(hours) || isNaN(minutes)) {
-        throw new Error('Неверный формат времени. Используйте ЧЧ:ММ')
-      }
-      const durationInSeconds = hours * 3600 + minutes * 60
-      return timeTrackingService.addDurationEntry(
-        taskId,
-        user.id,
-        durationInSeconds,
-        manualEntry.notes
-      )
+      if (isNaN(hours) || isNaN(minutes)) throw new Error('Формат: ЧЧ:ММ')
+      const seconds = hours * 3600 + minutes * 60
+      return timeTrackingService.addDurationEntry(taskId, user.id, seconds, manualEntry.notes)
     },
     onSuccess: () => {
-      toast.success('Запись времени добавлена')
+      toast.success('Запись добавлена')
       setShowManualForm(false)
       setManualEntry({ duration: '', notes: '' })
       queryClient.invalidateQueries({ queryKey: ['time-tracking', taskId] })
       queryClient.invalidateQueries({ queryKey: ['total-time', taskId] })
     },
-    onError: (error) => {
-      toast.error((error.message || 'Ошибка добавления записи'))
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const deleteEntryMutation = useMutation({
@@ -116,129 +98,127 @@ function TaskTimeTracking({ taskId, canEdit }) {
       queryClient.invalidateQueries({ queryKey: ['time-tracking', taskId] })
       queryClient.invalidateQueries({ queryKey: ['total-time', taskId] })
     },
-    onError: (error) => {
-      toast.error((error.message || 'Ошибка удаления записи'))
-    },
+    onError: (error) => toast.error(error.message || 'Ошибка'),
   })
 
   const formatDuration = (seconds) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     })
   }
 
   return (
     <div className="space-y-4">
-      {/* Header with Total Time */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h4 className="text-lg font-bold text-gray-900 dark:text-white">Учет времени</h4>
-          </div>
-          <div className="px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Всего затрачено</div>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatDuration(totalTime + elapsedTime)}</div>
-          </div>
+      {/* Total time */}
+      <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-5 flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-1">
+            Учёт времени
+          </p>
+          <p className="text-xs text-ink-muted dark:text-ink-muted-soft">
+            Всего затрачено
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-display text-4xl tracking-display-md text-ink dark:text-canvas tabular-nums leading-none">
+            {formatDuration(totalTime + elapsedTime)}
+          </p>
         </div>
       </div>
 
-      {/* Timer Controls */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-        {isRunning ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Таймер активен</span>
-              </div>
-              <button
-                onClick={() => stopTimerMutation.mutate()}
-                disabled={stopTimerMutation.isPending}
-                className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition disabled:opacity-50"
-              >
-                ⏹ Остановить
-              </button>
+      {/* Timer control */}
+      {isRunning ? (
+        <div className="bg-canvas-soft dark:bg-navy-soft border border-coral/40 rounded-lg p-4 animate-fadeIn">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-coral animate-shimmer" />
+              <span className="text-xs uppercase tracking-caption-up font-semibold text-coral">
+                Идёт сессия
+              </span>
             </div>
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-              <div className="text-xs text-green-700 dark:text-green-400 mb-1 uppercase tracking-wide">Текущая сессия</div>
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400 tabular-nums">{formatDuration(elapsedTime)}</div>
-            </div>
+            <button
+              onClick={() => stopTimerMutation.mutate()}
+              disabled={stopTimerMutation.isPending}
+              className="px-3 py-1.5 text-xs font-medium text-ink dark:text-canvas bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md hover:border-danger hover:text-danger transition-colors flex items-center gap-1.5"
+            >
+              <span className="w-2 h-2 bg-danger rounded-sm" />
+              Остановить
+            </button>
           </div>
-        ) : (
-          <button
-            onClick={() => startTimerMutation.mutate()}
-            disabled={startTimerMutation.isPending}
-            className="w-full px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 transition disabled:opacity-50 flex items-center justify-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            <span>Запустить таймер</span>
-          </button>
-        )}
-      </div>
+          <p className="font-display text-5xl tracking-display-md text-coral tabular-nums leading-none">
+            {formatDuration(elapsedTime)}
+          </p>
+        </div>
+      ) : (
+        <button
+          onClick={() => startTimerMutation.mutate()}
+          disabled={startTimerMutation.isPending}
+          className="w-full px-4 py-3 bg-coral hover:bg-coral-active text-white font-medium rounded-lg shadow-coral transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span className="text-sm">Запустить таймер</span>
+        </button>
+      )}
 
+      {/* Manual entry */}
       {canEdit && (
         <button
           onClick={() => setShowManualForm(!showManualForm)}
-          className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition flex items-center justify-center space-x-2"
+          className="w-full text-sm text-ink-muted dark:text-ink-muted-soft hover:text-coral py-2 border border-dashed border-hairline dark:border-navy-hairline hover:border-coral/50 rounded-md transition-all duration-200 flex items-center justify-center gap-2 group"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showManualForm ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} />
+          <svg
+            className={`w-3.5 h-3.5 transition-transform duration-300 ${showManualForm ? 'rotate-45' : 'group-hover:rotate-90'}`}
+            fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-          <span>{showManualForm ? 'Отменить' : 'Добавить время вручную'}</span>
+          {showManualForm ? 'Отменить' : 'Добавить время вручную'}
         </button>
       )}
 
       {showManualForm && (
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+        <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-4 animate-slideUp">
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Длительность</label>
+              <label className="block text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2">
+                Длительность
+              </label>
               <input
                 type="text"
                 value={manualEntry.duration}
                 onChange={(e) => setManualEntry({ ...manualEntry, duration: e.target.value })}
                 placeholder="2:30"
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg"
+                className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring font-mono text-base"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center space-x-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Формат: часы:минуты (например, 2:30)</span>
-              </p>
+              <p className="text-[11px] text-ink-muted-soft mt-1">Формат ЧЧ:ММ — например, 2:30</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Примечание</label>
+              <label className="block text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2">
+                Примечание
+              </label>
               <input
                 type="text"
                 value={manualEntry.notes}
                 onChange={(e) => setManualEntry({ ...manualEntry, notes: e.target.value })}
-                placeholder="Описание работы..."
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Описание работы"
+                className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring text-sm"
               />
             </div>
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               <button
                 onClick={() => addManualEntryMutation.mutate()}
                 disabled={!manualEntry.duration || addManualEntryMutation.isPending}
-                className="flex-1 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md shadow-coral transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addManualEntryMutation.isPending ? 'Добавление...' : 'Добавить запись'}
               </button>
@@ -247,7 +227,7 @@ function TaskTimeTracking({ taskId, canEdit }) {
                   setShowManualForm(false)
                   setManualEntry({ duration: '', notes: '' })
                 }}
-                className="px-4 py-2.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+                className="px-4 py-2 text-ink-body dark:text-ink-muted text-sm font-medium rounded-md hover:bg-canvas dark:hover:bg-navy-elevated transition-colors"
               >
                 Отмена
               </button>
@@ -256,67 +236,55 @@ function TaskTimeTracking({ taskId, canEdit }) {
         </div>
       )}
 
+      {/* History */}
       {timeEntries.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-3">
-            <h5 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide flex items-center space-x-2">
-              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>История ({timeEntries.length})</span>
+        <div>
+          <div className="flex items-baseline justify-between mb-3 mt-2">
+            <h5 className="font-display text-lg tracking-display-md text-ink dark:text-canvas">
+              История
             </h5>
+            <span className="text-xs tabular-nums text-ink-muted dark:text-ink-muted-soft font-medium">
+              {timeEntries.length}
+            </span>
           </div>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin">
             {timeEntries.map((entry) => (
-              <div key={entry.id} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:shadow-sm transition group">
-                <div className="flex items-start justify-between">
+              <div key={entry.id} className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-md p-3 hover:border-coral/40 transition-colors group">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="flex items-center space-x-1.5">
-                        <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="font-bold text-gray-900 dark:text-white tabular-nums">
-                          {formatDuration(entry.duration || 0)}
-                        </span>
-                      </div>
+                      <span className="font-mono text-sm font-semibold text-ink dark:text-canvas tabular-nums">
+                        {formatDuration(entry.duration || 0)}
+                      </span>
                       {!entry.ended_at && (
-                        <span className="px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium border border-green-300 dark:border-green-700 flex items-center space-x-1">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                          <span>Активна</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-coral-soft text-coral">
+                          <span className="w-1.5 h-1.5 bg-coral rounded-full animate-shimmer" />
+                          Активна
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center space-x-1 mb-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span>
-                        {formatDate(entry.started_at)}
-                        {entry.ended_at && ` → ${formatDate(entry.ended_at)}`}
-                      </span>
-                    </div>
+                    <p className="text-[11px] text-ink-muted dark:text-ink-muted-soft">
+                      {formatDate(entry.started_at)}
+                      {entry.ended_at && ` → ${formatDate(entry.ended_at)}`}
+                    </p>
                     {entry.notes && (
-                      <div className="text-xs text-gray-700 dark:text-gray-300 mt-1.5 bg-white dark:bg-gray-800 rounded px-2 py-1 italic border-l-2 border-blue-400 dark:border-blue-500">
-                        "{entry.notes}"
-                      </div>
+                      <p className="text-xs text-ink-body dark:text-ink-muted mt-1.5 italic border-l-2 border-coral pl-2">
+                        {entry.notes}
+                      </p>
                     )}
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center space-x-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <span>{entry.user?.email || 'Неизвестно'}</span>
-                    </div>
+                    <p className="text-[11px] text-ink-muted-soft mt-1">
+                      {entry.user?.email || '—'}
+                    </p>
                   </div>
                   {canEdit && entry.ended_at && (
                     <button
                       onClick={() => deleteEntryMutation.mutate(entry.id)}
                       disabled={deleteEntryMutation.isPending}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-ink-muted-soft hover:text-danger rounded transition-all"
                       title="Удалить запись"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6" />
                       </svg>
                     </button>
                   )}

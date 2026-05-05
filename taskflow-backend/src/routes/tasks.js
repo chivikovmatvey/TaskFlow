@@ -3,6 +3,8 @@ import { query } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { getBoardAccess, getTaskBoardId } from '../utils/boardAccess.js'
 import { emitBoardChanged } from '../realtime.js'
+import { logActivity } from '../utils/activityLog.js'
+import { notify } from '../utils/notifications.js'
 
 const router = express.Router()
 router.use(authMiddleware)
@@ -33,7 +35,17 @@ router.post('/', async (req, res) => {
       }
     )
     emitBoardChanged(board_id)
-    res.status(201).json(result.recordset[0])
+    const created = result.recordset[0]
+    await logActivity({
+      boardId: board_id, userId: req.user.id, action: 'task.created',
+      entityType: 'task', entityId: created.id, title: created.title,
+    })
+    notify({
+      actorId: req.user.id, actorEmail: req.user.email,
+      boardId: board_id, action: 'task.created',
+      taskId: created.id, title: created.title,
+    })
+    res.status(201).json(created)
   } catch (err) {
     console.error('Create task error:', err)
     res.status(500).json({ error: 'Ошибка' })
@@ -79,7 +91,25 @@ router.patch('/:id', async (req, res) => {
       }
     )
     emitBoardChanged(boardId)
-    res.json(result.recordset[0])
+    const updated = result.recordset[0]
+    const action = u.is_archived === true ? 'task.archived' : (u.is_archived === false ? 'task.unarchived' : 'task.updated')
+    await logActivity({
+      boardId, userId: req.user.id, action,
+      entityType: 'task', entityId: req.params.id, title: updated.title,
+    })
+    notify({
+      actorId: req.user.id, actorEmail: req.user.email,
+      boardId, action,
+      taskId: req.params.id, title: updated.title,
+    })
+    if ('assigned_to' in u && u.assigned_to && u.assigned_to !== req.user.id) {
+      notify({
+        actorId: req.user.id, actorEmail: req.user.email,
+        boardId, action: 'task.assigned',
+        taskId: req.params.id, title: updated.title,
+      })
+    }
+    res.json(updated)
   } catch (err) {
     console.error('Update task error:', err)
     res.status(500).json({ error: 'Ошибка' })
@@ -109,6 +139,16 @@ router.post('/:id/move', async (req, res) => {
       }
     }
     emitBoardChanged(boardId)
+    await logActivity({
+      boardId, userId: req.user.id, action: 'task.moved',
+      entityType: 'task', entityId: req.params.id,
+      details: { column_id, position },
+    })
+    notify({
+      actorId: req.user.id, actorEmail: req.user.email,
+      boardId, action: 'task.moved',
+      taskId: req.params.id,
+    })
     res.json({ ok: true })
   } catch (err) {
     console.error('Move task error:', err)
@@ -122,8 +162,13 @@ router.delete('/:id', async (req, res) => {
     if (!boardId) return res.status(404).json({ error: 'Не найдено' })
     const access = await getBoardAccess(boardId, req.user.id)
     if (!access) return res.status(403).json({ error: 'Нет доступа' })
+    const old = await query(`SELECT title FROM dbo.tasks WHERE id = @id`, { id: req.params.id })
     await query(`DELETE FROM dbo.tasks WHERE id = @id`, { id: req.params.id })
     emitBoardChanged(boardId)
+    await logActivity({
+      boardId, userId: req.user.id, action: 'task.deleted',
+      entityType: 'task', entityId: req.params.id, title: old.recordset[0]?.title,
+    })
     res.status(204).end()
   } catch (err) {
     console.error('Delete task error:', err)
@@ -217,6 +262,17 @@ router.post('/:id/comments', async (req, res) => {
       { tid: req.params.id, uid: req.user.id, content }
     )
     emitBoardChanged(boardId)
+    await logActivity({
+      boardId, userId: req.user.id, action: 'comment.added',
+      entityType: 'comment', entityId: result.recordset[0].id,
+      details: { task_id: req.params.id },
+    })
+    const tInfo = await query(`SELECT title FROM dbo.tasks WHERE id = @tid`, { tid: req.params.id })
+    notify({
+      actorId: req.user.id, actorEmail: req.user.email,
+      boardId, action: 'comment.added',
+      taskId: req.params.id, title: tInfo.recordset[0]?.title,
+    })
     res.status(201).json(result.recordset[0])
   } catch (err) {
     console.error('Add comment error:', err)

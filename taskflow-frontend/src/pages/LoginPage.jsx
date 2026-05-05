@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from '../components/common/ThemeToggle'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -12,7 +13,7 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!email || !password) {
       toast.error('Заполните все поля')
       return
@@ -26,47 +27,48 @@ function LoginPage() {
       navigate('/dashboard')
     } catch (error) {
       console.error('Login error:', error)
-      
-      if (error.message?.includes('Email not confirmed')) {
-        toast.error('Пожалуйста, подтвердите email. Проверьте вашу почту.')
-      } else if (error.message?.includes('Invalid login credentials')) {
-        toast.error('Неверный email или пароль')
-      } else {
-        toast.error(error.message || 'Ошибка входа')
-      }
+      toast.error(error.message || 'Ошибка входа')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-canvas dark:bg-navy flex flex-col">
+      <nav className="border-b border-hairline dark:border-navy-hairline">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link to="/" className="font-display text-xl tracking-display-md text-ink dark:text-canvas hover:text-coral transition-colors">
+            TaskFlow
+          </Link>
+          <ThemeToggle />
+        </div>
+      </nav>
+
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm animate-slideUp">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-              Вход в TaskFlow
-            </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Или{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                создайте новый аккаунт
+            <h1 className="font-display text-4xl tracking-display-lg text-ink dark:text-canvas mb-2">
+              Войти
+            </h1>
+            <p className="text-sm text-ink-muted dark:text-ink-muted-soft">
+              Нет аккаунта?{' '}
+              <Link to="/register" className="text-coral hover:text-coral-active transition-colors font-medium">
+                Создать
               </Link>
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email адрес
+              <label htmlFor="email" className="block text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2">
+                Email
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="w-full px-3.5 py-2.5 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring text-sm"
                 placeholder="ivan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -75,16 +77,15 @@ function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2">
                 Пароль
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="w-full px-3.5 py-2.5 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -92,23 +93,26 @@ function LoginPage() {
               />
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-              >
-                {loading ? 'Вход...' : 'Войти'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 bg-coral hover:bg-coral-active text-white text-sm font-medium rounded-md shadow-coral transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-white animate-shimmer" />
+                  Вход
+                </span>
+              ) : 'Войти'}
+            </button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-8 text-center">
             <Link
               to="/"
-              className="text-sm text-center block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              className="text-xs text-ink-muted-soft hover:text-ink dark:hover:text-canvas transition-colors"
             >
-              ← Вернуться на главную
+              ← На главную
             </Link>
           </div>
         </div>

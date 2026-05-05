@@ -3,6 +3,7 @@ import { query } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { getBoardAccess } from '../utils/boardAccess.js'
 import { emitBoardChanged } from '../realtime.js'
+import { logActivity } from '../utils/activityLog.js'
 
 const router = express.Router()
 router.use(authMiddleware)
@@ -21,7 +22,12 @@ router.post('/', async (req, res) => {
       { bid: board_id, title, pos: position ?? 0 }
     )
     emitBoardChanged(board_id)
-    res.status(201).json(result.recordset[0])
+    const c = result.recordset[0]
+    await logActivity({
+      boardId: board_id, userId: req.user.id, action: 'column.created',
+      entityType: 'column', entityId: c.id, title: c.title,
+    })
+    res.status(201).json(c)
   } catch (err) {
     console.error('Create column error:', err)
     res.status(500).json({ error: 'Ошибка' })
@@ -61,9 +67,14 @@ router.delete('/:id', async (req, res) => {
     const access = await getBoardAccess(boardId, req.user.id)
     if (!access?.canManageColumns) return res.status(403).json({ error: 'Нет прав' })
 
+    const old = await query(`SELECT title FROM dbo.columns WHERE id = @id`, { id: req.params.id })
     await query(`DELETE FROM dbo.tasks WHERE column_id = @id`, { id: req.params.id })
     await query(`DELETE FROM dbo.columns WHERE id = @id`, { id: req.params.id })
     emitBoardChanged(boardId)
+    await logActivity({
+      boardId, userId: req.user.id, action: 'column.deleted',
+      entityType: 'column', entityId: req.params.id, title: old.recordset[0]?.title,
+    })
     res.status(204).end()
   } catch (err) {
     console.error('Delete column error:', err)

@@ -9,6 +9,8 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import BoardPage from './pages/BoardPage'
+import InsightsPage from './pages/InsightsPage'
+import SettingsPage from './pages/SettingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +77,22 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/board/:id/insights"
+        element={
+          <ProtectedRoute>
+            <InsightsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
@@ -86,7 +104,7 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <Router>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+            <div className="min-h-screen bg-canvas dark:bg-navy text-ink dark:text-canvas">
               <AppRoutes />
               <Toaster
                 position="top-right"
@@ -95,17 +113,22 @@ function App() {
                   style: {
                     background: 'var(--toast-bg)',
                     color: 'var(--toast-color)',
+                    border: '1px solid var(--toast-border)',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    boxShadow: '0 4px 12px rgba(20,20,19,0.06), 0 2px 4px rgba(20,20,19,0.04)',
                   },
                   success: {
                     iconTheme: {
-                      primary: '#10b981',
-                      secondary: '#fff',
+                      primary: '#5db872',
+                      secondary: '#faf9f5',
                     },
                   },
                   error: {
                     iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#fff',
+                      primary: '#c64545',
+                      secondary: '#faf9f5',
                     },
                   },
                 }}

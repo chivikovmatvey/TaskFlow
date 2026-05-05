@@ -19,7 +19,6 @@ import SortableColumn from '../components/board/SortableColumn'
 import TaskCard from '../components/board/TaskCard'
 import OnlineUsers from '../components/board/OnlineUsers'
 import SearchAndFilters from '../components/board/SearchAndFilters'
-import BoardStatistics from '../components/board/BoardStatistics'
 import ThemeToggle from '../components/common/ThemeToggle'
 import { useAuth } from '../context/AuthContext'
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard'
@@ -40,7 +39,6 @@ function BoardPage() {
   const [activeColumn, setActiveColumn] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [overId, setOverId] = useState(null)
-  const [showStatistics, setShowStatistics] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const permissions = useBoardPermissions(boardId)
 
@@ -413,56 +411,92 @@ function BoardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-canvas dark:bg-navy">
+        <div className="flex flex-col items-center gap-3 animate-fadeIn">
+          <div className="w-1.5 h-1.5 rounded-full bg-coral animate-shimmer" />
+          <span className="text-sm text-ink-muted dark:text-ink-muted-soft tracking-wide">Загрузка</span>
+        </div>
       </div>
     )
   }
 
   if (!board) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Доска не найдена</h2>
-          <Link to="/dashboard" className="text-blue-600 hover:text-blue-700">Вернуться к дашборду</Link>
+      <div className="min-h-screen flex items-center justify-center bg-canvas dark:bg-navy">
+        <div className="text-center animate-slideUp">
+          <h2 className="font-display text-3xl text-ink dark:text-canvas mb-3 tracking-display-md">Доска не найдена</h2>
+          <Link to="/dashboard" className="text-coral hover:text-coral-active transition-colors text-sm">← Вернуться к дашборду</Link>
         </div>
       </div>
     )
   }
 
   const boardToDisplay = finalBoard || board
+  const archivedCount = board?.columns?.flatMap(c => c.tasks || []).filter(t => t.is_archived).length || 0
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <header className="bg-white dark:bg-gray-800 shadow-sm flex-shrink-0">
-        <div className="max-w-full px-4 sm:px-6 lg:px-8 py-3">
+    <div className="h-screen flex flex-col bg-canvas dark:bg-navy">
+      <header className="bg-canvas dark:bg-navy border-b border-hairline dark:border-navy-hairline flex-shrink-0">
+        <div className="max-w-full px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <div className="flex items-center gap-4">
+              <Link
+                to="/dashboard"
+                className="w-9 h-9 rounded-md border border-hairline dark:border-navy-hairline bg-canvas dark:bg-navy-elevated text-ink dark:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft transition-all duration-300 ease-smooth flex items-center justify-center group"
+                title="К дашборду"
+              >
+                <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{board.title}</h1>
-                {board.description && <p className="text-sm text-gray-600 dark:text-gray-400">{board.description}</p>}
+              <div className="flex items-baseline gap-3">
+                <h1 className="font-display text-2xl text-ink dark:text-canvas tracking-display-md leading-none">
+                  {board.title}
+                </h1>
+                {board.description && (
+                  <p className="text-sm text-ink-muted dark:text-ink-muted-soft truncate max-w-md">
+                    · {board.description}
+                  </p>
+                )}
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center gap-2">
               <OnlineUsers boardId={boardId} />
 
-              <button onClick={() => setShowStatistics(!showStatistics)} className={`px-3 py-2 rounded-lg text-sm font-medium transition ${showStatistics ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                Статистика
-              </button>
-              <button
-                onClick={() => setShowArchived(!showArchived)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${showArchived ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              >
-                Архив {board?.columns?.flatMap(c => c.tasks || []).filter(t => t.is_archived).length > 0 &&
-                  `(${board.columns.flatMap(c => c.tasks || []).filter(t => t.is_archived).length})`}
-              </button>
+              <div className="hidden md:flex items-center gap-1 mr-1">
+                <Link
+                  to={`/board/${boardId}/insights`}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-elevated transition-all duration-200 flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Аналитика
+                </Link>
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                    showArchived
+                      ? 'bg-coral-soft text-coral'
+                      : 'text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-elevated'
+                  }`}
+                >
+                  Архив
+                  {archivedCount > 0 && (
+                    <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-full bg-canvas-card dark:bg-navy-soft text-ink-muted">
+                      {archivedCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
               <ThemeToggle />
-              <button onClick={handleSignOut} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+
+              <button
+                onClick={handleSignOut}
+                className="ml-1 px-3 py-2 text-sm font-medium text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas transition-colors"
+              >
                 Выйти
               </button>
             </div>
@@ -470,30 +504,38 @@ function BoardPage() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden p-6">
-        <div className="flex-shrink-0 overflow-y-auto max-h-[40vh]">
-          {showStatistics && <BoardStatistics board={board} />}
+      <main className="flex-1 flex flex-col overflow-hidden px-6 lg:px-8 pt-4 pb-6">
+        <div className="flex-shrink-0 overflow-y-auto max-h-[40vh] mb-4 scrollbar-thin">
           <SearchAndFilters boardId={boardId} onSearchChange={setSearchQuery} onFiltersChange={setFilters} onSortChange={setSortConfig} filters={filters} currentSort={sortConfig} />
           <BoardMembers boardId={boardId} isOwner={board?.owner_id === user?.id} />
 
           {showArchived && archivedTasks?.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
-              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-3">Архивные задачи ({archivedTasks.length})</h3>
+            <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-5 mb-4 animate-slideUp">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-xl text-ink dark:text-canvas tracking-display-md">
+                  Архив
+                </h3>
+                <span className="text-xs uppercase tracking-caption-up text-ink-muted dark:text-ink-muted-soft">
+                  {archivedTasks.length} {archivedTasks.length === 1 ? 'задача' : 'задач'}
+                </span>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {archivedTasks.map(task => (
-                  <div key={task.id} className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-yellow-300 dark:border-yellow-600">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-medium text-gray-900 dark:text-white">{task.title}</h4>
+                  <div key={task.id} className="bg-canvas dark:bg-navy-elevated rounded-lg p-3 border border-hairline dark:border-navy-hairline hover:border-coral/40 transition-colors duration-200">
+                    <div className="flex justify-between items-start gap-2">
+                      <h4 className="text-sm font-medium text-ink dark:text-canvas leading-snug">{task.title}</h4>
                       <button onClick={async () => {
                         await taskService.unarchiveTask(task.id)
                         queryClient.invalidateQueries({ queryKey: ['board', boardId] })
                         queryClient.invalidateQueries({ queryKey: ['archived-tasks', boardId] })
                         toast.success('Задача восстановлена')
-                      }} className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-800">
+                      }} className="text-[11px] px-2 py-1 rounded-md bg-coral text-white hover:bg-coral-active transition-colors flex-shrink-0">
                         Восстановить
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Архивировано: {new Date(task.archived_at).toLocaleDateString('ru-RU')}</p>
+                    <p className="text-xs text-ink-muted dark:text-ink-muted-soft mt-2">
+                      {new Date(task.archived_at).toLocaleDateString('ru-RU')}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -503,7 +545,7 @@ function BoardPage() {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
           <SortableContext items={boardToDisplay.columns?.map(col => col.id) || []} strategy={horizontalListSortingStrategy}>
-            <div className="flex-1 flex space-x-4 overflow-x-auto overflow-y-hidden min-h-0 scrollbar-thin">
+            <div className="flex-1 flex gap-4 overflow-x-auto overflow-y-hidden min-h-0 scrollbar-thin pb-2">
               {boardToDisplay.columns?.map((column) => (
                 <SortableColumn
                   key={column.id}
@@ -514,28 +556,55 @@ function BoardPage() {
                 />
               ))}
               {permissions.canManageColumns && (
-              <div className="flex-shrink-0 w-80">
-                {showAddColumn ? (
-                  <form onSubmit={handleAddColumn} className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4">
-                    <input type="text" value={newColumnTitle} onChange={(e) => setNewColumnTitle(e.target.value)} placeholder="Название колонки" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" autoFocus />
-                    <div className="flex space-x-2">
-                      <button type="submit" disabled={createColumnMutation.isPending} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50">Добавить</button>
-                      <button type="button" onClick={() => { setShowAddColumn(false); setNewColumnTitle('') }} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition">Отмена</button>
-                    </div>
-                  </form>
-                ) : (
-                  <button onClick={() => setShowAddColumn(true)} className="bg-white dark:bg-gray-700 bg-opacity-50 dark:bg-opacity-50 hover:bg-opacity-70 dark:hover:bg-opacity-70 rounded-lg p-4 text-gray-700 dark:text-gray-300 font-medium transition flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            )}
+                <div className="flex-shrink-0 w-80">
+                  {showAddColumn ? (
+                    <form onSubmit={handleAddColumn} className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-4 animate-scaleIn">
+                      <input
+                        type="text"
+                        value={newColumnTitle}
+                        onChange={(e) => setNewColumnTitle(e.target.value)}
+                        placeholder="Название колонки"
+                        className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring mb-3 text-sm"
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={createColumnMutation.isPending}
+                          className="px-4 py-2 bg-coral text-white text-sm font-medium rounded-md hover:bg-coral-active transition-colors disabled:opacity-50"
+                        >
+                          Добавить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setShowAddColumn(false); setNewColumnTitle('') }}
+                          className="px-4 py-2 text-ink-body dark:text-ink-muted text-sm font-medium rounded-md hover:bg-canvas dark:hover:bg-navy-elevated transition-colors"
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddColumn(true)}
+                      className="w-full h-12 rounded-lg border border-dashed border-hairline dark:border-navy-hairline text-ink-muted dark:text-ink-muted-soft hover:border-coral hover:text-coral transition-all duration-300 flex items-center justify-center gap-2 text-sm font-medium group"
+                    >
+                      <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Добавить колонку
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </SortableContext>
-          <DragOverlay>
-            {activeTask && <div className="rotate-3 opacity-90"><TaskCard task={activeTask} boardId={boardId} isDragging={true} /></div>}
+          <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}>
+            {activeTask && (
+              <div className="rotate-2 scale-105 opacity-95 shadow-lift-lg rounded-lg">
+                <TaskCard task={activeTask} boardId={boardId} isDragging={true} />
+              </div>
+            )}
           </DragOverlay>
         </DndContext>
       </main>
