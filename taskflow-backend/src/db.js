@@ -26,28 +26,63 @@ const config = {
 
 let poolPromise = null
 
+const delay = (ms) => new Promise((res) => setTimeout(res, ms))
+
+async function connectWithRetry(retries = 10, delayMs = 3000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const pool = await new sql.ConnectionPool(config).connect()
+      console.log('✅ Connected to SQL Server')
+      return pool
+    } catch (err) {
+      if (attempt === retries) {
+        console.error('❌ SQL Server connection failed after', retries, 'attempts:', err.message)
+        throw err
+      }
+      console.warn(`⏳ SQL Server не готов (попытка ${attempt}/${retries}), повтор через ${delayMs / 1000}с...`)
+      await delay(delayMs)
+    }
+  }
+}
+
 export function getPool() {
   if (!poolPromise) {
-    poolPromise = new sql.ConnectionPool(config)
-      .connect()
-      .then((pool) => {
-        console.log('✅ Connected to SQL Server')
-        return pool
-      })
-      .catch((err) => {
-        console.error(' SQL Server connection failed:', err)
-        poolPromise = null
-        throw err
-      })
+    poolPromise = connectWithRetry().catch((err) => {
+      poolPromise = null
+      throw err
+    })
   }
   return poolPromise
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function inferType(value) {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string') {
+    if (UUID_RE.test(value)) return sql.UniqueIdentifier
+    return sql.NVarChar(sql.MAX)
+  }
+  if (typeof value === 'boolean') return sql.Bit
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? sql.BigInt : sql.Float
+  }
+  if (typeof value === 'bigint') return sql.BigInt
+  if (value instanceof Date) return sql.DateTimeOffset
+  if (Buffer.isBuffer(value)) return sql.VarBinary(sql.MAX)
+  return null
 }
 
 export async function query(text, params = {}) {
   const pool = await getPool()
   const request = pool.request()
   for (const [key, value] of Object.entries(params)) {
-    request.input(key, value)
+    const type = inferType(value)
+    if (type) {
+      request.input(key, type, value)
+    } else {
+      request.input(key, value)
+    }
   }
   return request.query(text)
 }

@@ -8,7 +8,7 @@ function HomePage() {
       <nav className="border-b border-hairline dark:border-navy-hairline">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="font-display text-xl tracking-display-md text-ink dark:text-canvas">TaskFlow</span>
+            <img src="/logo.svg" alt="TaskFlow" className="h-12 w-auto" />
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />

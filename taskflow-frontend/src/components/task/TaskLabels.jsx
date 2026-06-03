@@ -2,12 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { labelService } from '../../services/labelService'
-
-const PRESET_COLORS = [
-  '#cc785c', '#a9583e', '#e8a55a', '#d4a017', '#5db872', '#5db8a6',
-  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#c64545',
-  '#64748b', '#374151', '#0d9488', '#7c3aed', '#db2777', '#f97316',
-]
+import ColorPicker, { DEFAULT_PRESETS as PRESET_COLORS } from '../common/ColorPicker'
 
 function TaskLabels({ taskId, boardId }) {
   const queryClient = useQueryClient()
@@ -140,7 +135,7 @@ function TaskLabels({ taskId, boardId }) {
           )}
 
           {showCreateLabel ? (
-            <form onSubmit={handleCreateLabel} className="space-y-2 pt-2 border-t border-hairline dark:border-navy-hairline animate-fadeIn">
+            <form onSubmit={handleCreateLabel} className="space-y-3 pt-2 border-t border-hairline dark:border-navy-hairline animate-fadeIn">
               <input
                 type="text"
                 value={newLabelName}
@@ -149,22 +144,7 @@ function TaskLabels({ taskId, boardId }) {
                 className="w-full px-3 py-2 text-sm bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas placeholder:text-ink-muted-soft focus-ring"
                 autoFocus
               />
-              <div className="grid grid-cols-9 gap-1.5">
-                {PRESET_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setNewLabelColor(color)}
-                    className={`w-6 h-6 rounded-md transition-all duration-200 ${
-                      newLabelColor === color ? 'ring-2 ring-offset-2 ring-offset-canvas-soft dark:ring-offset-navy-soft scale-110' : 'hover:scale-110'
-                    }`}
-                    style={{
-                      backgroundColor: color,
-                      ...(newLabelColor === color ? { '--tw-ring-color': color } : {}),
-                    }}
-                  />
-                ))}
-              </div>
+              <ColorPicker value={newLabelColor} onChange={setNewLabelColor} label={null} />
               <div className="flex gap-2">
                 <button
                   type="submit"

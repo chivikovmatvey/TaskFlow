@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from '../components/common/ThemeToggle'
 import ConfirmModal from '../components/common/ConfirmModal'
 import { useRealtimeDashboard } from '../hooks/useRealtimeDashboard'
+import ColorPicker from '../components/common/ColorPicker'
 
 function DashboardPage() {
   const { user, signOut } = useAuth()
@@ -20,9 +21,11 @@ function DashboardPage() {
   const [newBoardDescription, setNewBoardDescription] = useState('')
   const [newSectionName, setNewSectionName] = useState('')
   const [newSectionDescription, setNewSectionDescription] = useState('')
+  const [newSectionColor, setNewSectionColor] = useState('#cc785c')
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, type: null, id: null, title: '' })
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('all') // all | my | shared | section:<id>
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useRealtimeDashboard()
 
@@ -60,12 +63,13 @@ function DashboardPage() {
   })
 
   const createSectionMutation = useMutation({
-    mutationFn: ({ name, description }) => sectionService.createSection(name, description),
+    mutationFn: ({ name, description, color }) => sectionService.createSection(name, description, color),
     onSuccess: () => {
       toast.success('Раздел создан')
       setShowCreateSection(false)
       setNewSectionName('')
       setNewSectionDescription('')
+      setNewSectionColor('#cc785c')
       queryClient.invalidateQueries({ queryKey: ['sections'] })
     },
     onError: (err) => toast.error(err.message || 'Ошибка'),
@@ -110,6 +114,7 @@ function DashboardPage() {
     createSectionMutation.mutate({
       name: newSectionName.trim(),
       description: newSectionDescription.trim(),
+      color: newSectionColor,
     })
   }
 
@@ -158,9 +163,14 @@ function DashboardPage() {
     return sections.find(s => s.id === sid)
   }, [activeFilter, sections])
 
+  const selectFilter = (key) => {
+    setActiveFilter(key)
+    setSidebarOpen(false)
+  }
+
   const filterButton = (key, label, count) => (
     <button
-      onClick={() => setActiveFilter(key)}
+      onClick={() => selectFilter(key)}
       className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
         activeFilter === key
           ? 'bg-coral-soft text-coral'
@@ -178,13 +188,34 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy flex">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden animate-fadeIn"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-hairline dark:border-navy-hairline bg-canvas-soft dark:bg-navy-soft hidden md:flex flex-col">
-        <div className="p-5 border-b border-hairline dark:border-navy-hairline">
-          <Link to="/" className="font-display text-xl tracking-display-md text-ink dark:text-canvas hover:text-coral transition-colors">
-            TaskFlow
-          </Link>
-          <p className="text-xs text-ink-muted-soft mt-1 truncate">{user?.email}</p>
+      <aside className={`fixed md:relative inset-y-0 left-0 z-50 w-64 flex-shrink-0 border-r border-hairline dark:border-navy-hairline bg-canvas-soft dark:bg-navy-soft flex flex-col transform transition-transform duration-300 ease-smooth md:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
+        <div className="p-5 border-b border-hairline dark:border-navy-hairline flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <img src="/logo.svg" alt="TaskFlow" className="h-12 w-auto" />
+            </Link>
+            <p className="text-xs text-ink-muted-soft mt-1 truncate">{user?.email}</p>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden p-1 -mr-1 text-ink-muted hover:text-ink dark:hover:text-canvas rounded-md transition-colors"
+            aria-label="Закрыть меню"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-5 scrollbar-thin">
@@ -222,7 +253,7 @@ function DashboardPage() {
               {sections.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => setActiveFilter(`section:${s.id}`)}
+                  onClick={() => selectFilter(`section:${s.id}`)}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group ${
                     activeFilter === `section:${s.id}`
                       ? 'bg-coral-soft text-coral'
@@ -244,6 +275,15 @@ function DashboardPage() {
         </div>
 
         <div className="p-3 border-t border-hairline dark:border-navy-hairline space-y-1">
+          <Link
+            to="/teams"
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas-card dark:hover:bg-navy-elevated rounded-md transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Команды
+          </Link>
           <Link
             to="/settings"
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas-card dark:hover:bg-navy-elevated rounded-md transition-colors"
@@ -267,15 +307,32 @@ function DashboardPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-x-hidden">
-        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-10">
+      <main className="flex-1 overflow-x-hidden min-w-0">
+        {/* Mobile header */}
+        <div className="md:hidden sticky top-0 z-30 bg-canvas dark:bg-navy border-b border-hairline dark:border-navy-hairline px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 -ml-2 text-ink dark:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft rounded-md transition-colors"
+            aria-label="Открыть меню"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.svg" alt="TaskFlow" className="h-10 w-auto" />
+          </Link>
+          <div className="w-9" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-10">
           {/* Header */}
-          <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
+          <div className="flex items-end justify-between mb-6 md:mb-8 flex-wrap gap-4">
             <div className="animate-slideUp">
               <p className="text-xs uppercase tracking-caption-up font-semibold text-ink-muted dark:text-ink-muted-soft mb-2">
                 {activeSection ? 'Раздел' : 'Дашборд'}
               </p>
-              <h1 className="font-display text-5xl tracking-display-lg text-ink dark:text-canvas leading-none">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-display-lg text-ink dark:text-canvas leading-none">
                 {activeSection ? activeSection.name :
                   activeFilter === 'my' ? 'Мои доски' :
                   activeFilter === 'shared' ? 'Общие' :
@@ -413,6 +470,7 @@ function DashboardPage() {
             onChange={setNewSectionDescription}
             placeholder="Для чего этот раздел"
           />
+          <ColorPicker value={newSectionColor} onChange={setNewSectionColor} />
         </CreateModal>
       )}
 
@@ -437,7 +495,6 @@ function DashboardPage() {
   )
 }
 
-// ─── helper components ────────────────────────────────────────
 function CreateModal({ title, children, onClose, onSubmit, loading }) {
   return (
     <div
@@ -520,7 +577,6 @@ function ModalTextarea({ label, value, onChange, placeholder }) {
   )
 }
 
-// ─── BoardCard with menu ──────────────────────────────────────
 function BoardCard({ board, isOwner, sections, onDelete, onMove }) {
   const [showMenu, setShowMenu] = useState(false)
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
@@ -563,7 +619,7 @@ function BoardCard({ board, isOwner, sections, onDelete, onMove }) {
             <button
               ref={buttonRef}
               onClick={openMenu}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 -m-1 text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas dark:hover:bg-navy-elevated rounded"
+              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5 -m-1 text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas dark:hover:bg-navy-elevated rounded"
               title="Меню"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

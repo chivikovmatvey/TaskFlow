@@ -19,4 +19,14 @@ export const telegramService = {
     const { data } = await apiClient.patch('/telegram/preferences', prefs)
     return data
   },
+
+  async startLogin() {
+    const { data } = await apiClient.post('/telegram/login/start')
+    return data
+  },
+
+  async loginStatus(code) {
+    const { data } = await apiClient.get('/telegram/login/status', { params: { code } })
+    return data
+  },
 }

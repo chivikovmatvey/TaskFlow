@@ -16,7 +16,11 @@ import attachmentRoutes from './routes/attachments.js'
 import sectionRoutes from './routes/sections.js'
 import insightsRoutes from './routes/insights.js'
 import telegramRoutes from './routes/telegram.js'
+import teamRoutes from './routes/teams.js'
+import oauthRoutes from './routes/oauth.js'
+import adminRoutes from './routes/admin.js'
 import { initTelegram } from './telegram.js'
+import { initEmail } from './email.js'
 
 dotenv.config()
 
@@ -32,7 +36,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' })
 })
 
+app.use('/api/auth/oauth', oauthRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/teams', teamRoutes)
 app.use('/api/boards', boardRoutes)
 app.use('/api/columns', columnRoutes)
 app.use('/api/tasks', taskRoutes)
@@ -56,6 +63,7 @@ initRealtime(server)
 
 getPool()
   .then(() => {
+    initEmail()
     initTelegram()
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`)

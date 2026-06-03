@@ -25,7 +25,6 @@ async function getSectionAccess(sectionId, userId) {
   }
 }
 
-// Список разделов пользователя
 router.get('/', async (req, res) => {
   try {
     const r = await query(
@@ -96,7 +95,6 @@ router.delete('/:id', async (req, res) => {
   try {
     const access = await getSectionAccess(req.params.id, req.user.id)
     if (!access?.isOwner) return res.status(403).json({ error: 'Только владелец может удалять' })
-    // Boards удалять не нужно — просто отвязываем
     await query(`UPDATE dbo.boards SET section_id = NULL WHERE section_id = @id`, { id: req.params.id })
     await query(`DELETE FROM dbo.sections WHERE id = @id`, { id: req.params.id })
     res.status(204).end()
@@ -106,7 +104,6 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// Участники раздела
 router.get('/:id/members', async (req, res) => {
   try {
     const access = await getSectionAccess(req.params.id, req.user.id)
@@ -183,7 +180,6 @@ router.delete('/:id/members/:memberId', async (req, res) => {
   }
 })
 
-// Доски в разделе
 router.get('/:id/boards', async (req, res) => {
   try {
     const access = await getSectionAccess(req.params.id, req.user.id)

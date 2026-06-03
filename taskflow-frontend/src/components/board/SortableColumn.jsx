@@ -1,8 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import KanbanBoard from './KanbanBoard'
+import { useModalStore, selectIsAnyModalOpen } from '../../stores/modalStore'
 
 function SortableColumn({ column, boardId, onModalStateChange, canManageColumns }) {
+  const isAnyModalOpen = useModalStore(selectIsAnyModalOpen)
   const {
     attributes,
     listeners,
@@ -12,7 +14,7 @@ function SortableColumn({ column, boardId, onModalStateChange, canManageColumns 
     isDragging,
   } = useSortable({
     id: column.id,
-    disabled: !canManageColumns,
+    disabled: !canManageColumns || isAnyModalOpen,
     data: {
       type: 'column',
       column,
@@ -29,13 +31,13 @@ function SortableColumn({ column, boardId, onModalStateChange, canManageColumns 
     <div
       ref={setNodeRef}
       style={style}
-      className="flex-shrink-0 w-80 flex flex-col h-full group/column relative"
+      className="w-full md:w-80 md:flex-shrink-0 flex flex-col md:h-full group/column relative"
     >
       {canManageColumns && (
         <div
           {...attributes}
           {...listeners}
-          className="absolute top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 cursor-grab active:cursor-grabbing flex items-center justify-center opacity-0 group-hover/column:opacity-100 transition-all duration-300 ease-smooth hover:scale-110"
+          className="absolute top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 cursor-grab active:cursor-grabbing flex items-center justify-center opacity-60 md:opacity-0 md:group-hover/column:opacity-100 transition-all duration-300 ease-smooth hover:scale-110"
           title="Перетащите колонку"
         >
           <div className="flex flex-col gap-0.5">

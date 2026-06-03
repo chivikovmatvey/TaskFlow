@@ -61,8 +61,8 @@ export const taskService = {
     return data
   },
 
-  async addComment(taskId, content) {
-    const { data } = await apiClient.post(`/tasks/${taskId}/comments`, { content })
+  async addComment(taskId, content, parentId = null) {
+    const { data } = await apiClient.post(`/tasks/${taskId}/comments`, { content, parent_id: parentId })
     return data
   },
 

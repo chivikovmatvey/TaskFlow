@@ -1,8 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import TaskCard from './TaskCard'
+import { useModalStore, selectIsAnyModalOpen } from '../../stores/modalStore'
 
 function SortableTaskCard({ task, boardId, onModalStateChange }) {
+  const isAnyModalOpen = useModalStore(selectIsAnyModalOpen)
   const {
     attributes,
     listeners,
@@ -12,6 +14,7 @@ function SortableTaskCard({ task, boardId, onModalStateChange }) {
     isDragging,
   } = useSortable({
     id: task.id,
+    disabled: isAnyModalOpen,
   })
 
   const style = {

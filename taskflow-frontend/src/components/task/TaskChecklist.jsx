@@ -183,7 +183,7 @@ function TaskChecklist({ taskId }) {
               <button
                 onClick={() => deleteMutation.mutate(item.id)}
                 disabled={deleteMutation.isPending}
-                className="opacity-0 group-hover:opacity-100 p-1 text-ink-muted-soft hover:text-danger rounded transition-all"
+                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 text-ink-muted-soft hover:text-danger rounded transition-all"
                 title="Удалить"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">

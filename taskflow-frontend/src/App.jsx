@@ -11,6 +11,10 @@ import DashboardPage from './pages/DashboardPage'
 import BoardPage from './pages/BoardPage'
 import InsightsPage from './pages/InsightsPage'
 import SettingsPage from './pages/SettingsPage'
+import TeamsPage from './pages/TeamsPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
+import CompleteProfilePage from './pages/CompleteProfilePage'
+import AdminPage from './pages/AdminPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,13 +25,23 @@ const queryClient = new QueryClient({
   },
 })
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, requireUsername = true }) {
   const { user } = useAuth()
-  
+
   if (!user) {
     return <Navigate to="/login" replace />
   }
+  if (requireUsername && !user.username) {
+    return <Navigate to="/complete-profile" replace />
+  }
 
+  return children
+}
+
+function AdminRoute({ children }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (!user.is_admin) return <Navigate to="/dashboard" replace />
   return children
 }
 
@@ -91,6 +105,31 @@ function AppRoutes() {
           <ProtectedRoute>
             <SettingsPage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teams"
+        element={
+          <ProtectedRoute>
+            <TeamsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route
+        path="/complete-profile"
+        element={
+          <ProtectedRoute requireUsername={false}>
+            <CompleteProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />

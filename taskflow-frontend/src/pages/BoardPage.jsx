@@ -40,6 +40,7 @@ function BoardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [overId, setOverId] = useState(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const permissions = useBoardPermissions(boardId)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -437,31 +438,31 @@ function BoardPage() {
   return (
     <div className="h-screen flex flex-col bg-canvas dark:bg-navy">
       <header className="bg-canvas dark:bg-navy border-b border-hairline dark:border-navy-hairline flex-shrink-0">
-        <div className="max-w-full px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
+        <div className="max-w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Link
                 to="/dashboard"
-                className="w-9 h-9 rounded-md border border-hairline dark:border-navy-hairline bg-canvas dark:bg-navy-elevated text-ink dark:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft transition-all duration-300 ease-smooth flex items-center justify-center group"
+                className="w-9 h-9 flex-shrink-0 rounded-md border border-hairline dark:border-navy-hairline bg-canvas dark:bg-navy-elevated text-ink dark:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft transition-all duration-300 ease-smooth flex items-center justify-center group"
                 title="К дашборду"
               >
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <div className="flex items-baseline gap-3">
-                <h1 className="font-display text-2xl text-ink dark:text-canvas tracking-display-md leading-none">
+              <div className="flex items-baseline gap-3 min-w-0">
+                <h1 className="font-display text-lg sm:text-2xl text-ink dark:text-canvas tracking-display-md leading-none truncate">
                   {board.title}
                 </h1>
                 {board.description && (
-                  <p className="text-sm text-ink-muted dark:text-ink-muted-soft truncate max-w-md">
+                  <p className="hidden sm:block text-sm text-ink-muted dark:text-ink-muted-soft truncate max-w-md">
                     · {board.description}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <OnlineUsers boardId={boardId} />
 
               <div className="hidden md:flex items-center gap-1 mr-1">
@@ -491,21 +492,82 @@ function BoardPage() {
                 </button>
               </div>
 
-              <ThemeToggle />
+              <div className="hidden md:flex items-center gap-2">
+                <ThemeToggle />
+                <button
+                  onClick={handleSignOut}
+                  className="ml-1 px-3 py-2 text-sm font-medium text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas transition-colors"
+                >
+                  Выйти
+                </button>
+              </div>
 
-              <button
-                onClick={handleSignOut}
-                className="ml-1 px-3 py-2 text-sm font-medium text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas transition-colors"
-              >
-                Выйти
-              </button>
+              {/* Mobile kebab menu */}
+              <div className="md:hidden relative">
+                <button
+                  onClick={() => setMobileMenuOpen(v => !v)}
+                  className="w-9 h-9 flex items-center justify-center rounded-md border border-hairline dark:border-navy-hairline bg-canvas dark:bg-navy-elevated text-ink dark:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft transition-colors"
+                  aria-label="Меню"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="6" r="1.5" />
+                    <circle cx="12" cy="12" r="1.5" />
+                    <circle cx="12" cy="18" r="1.5" />
+                  </svg>
+                </button>
+                {mobileMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-50 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-lg shadow-lift-lg py-1 min-w-[200px] animate-scaleIn" style={{ transformOrigin: 'top right' }}>
+                      <Link
+                        to={`/board/${boardId}/insights`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="w-full px-3 py-2.5 text-left text-sm text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-soft hover:text-ink dark:hover:text-canvas transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Аналитика
+                      </Link>
+                      <button
+                        onClick={() => { setShowArchived(!showArchived); setMobileMenuOpen(false) }}
+                        className="w-full px-3 py-2.5 text-left text-sm text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-soft hover:text-ink dark:hover:text-canvas transition-colors flex items-center justify-between gap-2"
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                          </svg>
+                          Архив
+                        </span>
+                        {archivedCount > 0 && (
+                          <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-full bg-canvas-card dark:bg-navy-soft text-ink-muted">
+                            {archivedCount}
+                          </span>
+                        )}
+                      </button>
+                      <div className="my-1 mx-2 h-px bg-hairline dark:bg-navy-hairline" />
+                      <div className="px-3 py-1.5 flex items-center justify-between">
+                        <span className="text-xs text-ink-muted">Тема</span>
+                        <ThemeToggle />
+                      </div>
+                      <div className="my-1 mx-2 h-px bg-hairline dark:bg-navy-hairline" />
+                      <button
+                        onClick={() => { setMobileMenuOpen(false); handleSignOut() }}
+                        className="w-full px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10 transition-colors"
+                      >
+                        Выйти
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden px-6 lg:px-8 pt-4 pb-6">
-        <div className="flex-shrink-0 overflow-y-auto max-h-[40vh] mb-4 scrollbar-thin">
+      <main className="flex-1 flex flex-col overflow-hidden px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-4 sm:pb-6 min-w-0">
+        <div className="flex-shrink-0 overflow-y-auto overflow-x-hidden max-h-[40vh] mb-4 scrollbar-thin">
           <SearchAndFilters boardId={boardId} onSearchChange={setSearchQuery} onFiltersChange={setFilters} onSortChange={setSortConfig} filters={filters} currentSort={sortConfig} />
           <BoardMembers boardId={boardId} isOwner={board?.owner_id === user?.id} />
 
@@ -545,7 +607,7 @@ function BoardPage() {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
           <SortableContext items={boardToDisplay.columns?.map(col => col.id) || []} strategy={horizontalListSortingStrategy}>
-            <div className="flex-1 flex gap-4 overflow-x-auto overflow-y-hidden min-h-0 scrollbar-thin pb-2">
+            <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-y-auto md:overflow-y-hidden md:overflow-x-auto min-h-0 scrollbar-thin pb-2">
               {boardToDisplay.columns?.map((column) => (
                 <SortableColumn
                   key={column.id}
@@ -556,7 +618,7 @@ function BoardPage() {
                 />
               ))}
               {permissions.canManageColumns && (
-                <div className="flex-shrink-0 w-80">
+                <div className="flex-shrink-0 w-full md:w-80">
                   {showAddColumn ? (
                     <form onSubmit={handleAddColumn} className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-4 animate-scaleIn">
                       <input

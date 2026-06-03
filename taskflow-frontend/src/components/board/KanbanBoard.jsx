@@ -189,7 +189,7 @@ function KanbanBoard({ column, boardId, onModalStateChange }) {
 
   return (
     <>
-      <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-3 flex flex-col flex-1 min-h-0 transition-colors duration-300">
+      <div className="bg-canvas-soft dark:bg-navy-soft border border-hairline dark:border-navy-hairline rounded-lg p-3 flex flex-col md:flex-1 md:min-h-0 transition-colors duration-300">
         {/* Column Header */}
         <div className="mb-3 px-1 flex items-center justify-between group">
           {isEditingTitle ? (
@@ -228,7 +228,7 @@ function KanbanBoard({ column, boardId, onModalStateChange }) {
               {permissions.canManageColumns && (
                 <button
                   onClick={() => setDeleteConfirm(true)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-ink-muted dark:text-ink-muted-soft hover:text-danger p-1 rounded-md"
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-ink-muted dark:text-ink-muted-soft hover:text-danger p-1.5 rounded-md"
                   title="Удалить колонку"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
@@ -244,7 +244,7 @@ function KanbanBoard({ column, boardId, onModalStateChange }) {
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           <div
             ref={setNodeRef}
-            className="flex-1 overflow-y-auto space-y-2 mb-2 min-h-[100px] scrollbar-thin pr-0.5"
+            className="md:flex-1 md:overflow-y-auto space-y-2 mb-2 min-h-[100px] scrollbar-thin pr-0.5"
           >
             {tasks.map((task) => (
               <SortableTaskCard

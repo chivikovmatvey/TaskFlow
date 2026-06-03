@@ -6,15 +6,19 @@ import { taskService } from '../../services/taskService'
 import { boardService } from '../../services/boardService'
 import { authService } from '../../services/authService'
 import { useAuth } from '../../context/AuthContext'
-import CommentItem from './CommentItem'
+import CommentThread from './CommentThread'
 import TaskAttachments from './TaskAttachments'
 import TaskChecklist from './TaskChecklist'
 import TaskLabels from './TaskLabels'
 import TaskTimeTracking from './TaskTimeTracking'
 import { boardMemberService } from '../../services/boardMemberService'
 import ConfirmModal from '../common/ConfirmModal'
+import Select from '../common/Select'
+import AssigneeSelect from '../common/AssigneeSelect'
+import { useModalLock } from '../../hooks/useModalLock'
 
 function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
+  useModalLock(true)
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [title, setTitle] = useState(task.title)
@@ -189,22 +193,22 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
   return createPortal(
     <>
       <div
-        className="modal-overlay fixed inset-0 flex items-center justify-center p-4 z-[60] animate-fadeIn"
+        className="modal-overlay fixed inset-0 flex items-center justify-center p-2 sm:p-4 z-[60] animate-fadeIn"
         style={{ backgroundColor: 'var(--bg-overlay)' }}
         onClick={handleClose}
       >
         <div
-          className="bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-xl shadow-lift-lg w-full max-w-4xl h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
+          className="bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-xl shadow-lift-lg w-full max-w-4xl h-[95vh] sm:h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 border-b border-hairline dark:border-navy-hairline">
-            <div className="flex justify-between items-start gap-4">
+          <div className="p-4 sm:p-6 border-b border-hairline dark:border-navy-hairline">
+            <div className="flex justify-between items-start gap-3 sm:gap-4">
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="font-display text-3xl tracking-display-md text-ink dark:text-canvas bg-transparent border-none outline-none focus-ring rounded-md px-2 -mx-2 flex-1 leading-tight"
+                className="font-display text-xl sm:text-3xl tracking-display-md text-ink dark:text-canvas bg-transparent border-none outline-none focus-ring rounded-md px-2 -mx-2 flex-1 leading-tight min-w-0"
                 placeholder="Название задачи"
               />
               <button
@@ -217,12 +221,12 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
               </button>
             </div>
 
-            <div className="flex gap-1 mt-5 -mb-px">
+            <div className="flex gap-1 mt-4 sm:mt-5 -mb-px overflow-x-auto overflow-y-hidden no-scrollbar">
               {tabs.map(t => (
                 <button
                   key={t.value}
                   onClick={() => setActiveTab(t.value)}
-                  className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`relative shrink-0 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === t.value
                       ? 'text-coral'
                       : 'text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas'
@@ -238,7 +242,7 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin animate-fadeIn">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin animate-fadeIn">
             {activeTab === 'details' ? (
               <div className="space-y-6">
                 <div>
@@ -255,37 +259,37 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className={labelClass}>Приоритет</label>
-                    <select
+                    <Select
                       value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                      className={`${inputClass} cursor-pointer`}
-                    >
-                      <option value="low">Низкий</option>
-                      <option value="medium">Средний</option>
-                      <option value="high">Высокий</option>
-                      <option value="urgent">Срочно</option>
-                    </select>
+                      onChange={setPriority}
+                      options={[
+                        { value: 'low', label: 'Низкий', color: '#5db8a6' },
+                        { value: 'medium', label: 'Средний', color: '#cc785c' },
+                        { value: 'high', label: 'Высокий', color: '#e8a55a' },
+                        { value: 'urgent', label: 'Срочно', color: '#c64545' },
+                      ]}
+                      renderOption={(opt) => (
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: opt.color }} />
+                          {opt.label}
+                        </span>
+                      )}
+                      renderTrigger={(opt) => (
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: opt.color }} />
+                          {opt.label}
+                        </span>
+                      )}
+                    />
                   </div>
 
                   <div>
                     <label className={labelClass}>Исполнитель</label>
-                    <select
+                    <AssigneeSelect
                       value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                      className={`${inputClass} cursor-pointer`}
-                    >
-                      <option value="">Не назначен</option>
-                      {board?.owner_id && (
-                        <option key={board.owner_id} value={board.owner_id}>
-                          {getOwnerDisplayEmail()}
-                        </option>
-                      )}
-                      {boardMembers?.map((member) => (
-                        <option key={member.user_id} value={member.user_id}>
-                          {member.profiles?.email || member.user_id}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setAssignedTo}
+                      members={boardMembers || []}
+                    />
                   </div>
 
                   <div>
@@ -294,7 +298,9 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className={inputClass}
+                      onClick={(e) => { try { e.currentTarget.showPicker?.() } catch { /* ignore */ } }}
+                      onFocus={(e) => { try { e.currentTarget.showPicker?.() } catch { /* ignore */ } }}
+                      className={`${inputClass} cursor-pointer`}
                     />
                   </div>
                 </div>
@@ -336,11 +342,7 @@ function TaskModal({ task, boardId, onClose, initialTab = 'details' }) {
                 {commentsLoading ? (
                   <div className="text-center py-8 text-sm text-ink-muted-soft animate-shimmer">Загрузка</div>
                 ) : comments && comments.length > 0 ? (
-                  <div className="space-y-3">
-                    {comments.map((comment) => (
-                      <CommentItem key={comment.id} comment={comment} taskId={task.id} currentUserId={user?.id} />
-                    ))}
-                  </div>
+                  <CommentThread comments={comments} taskId={task.id} currentUserId={user?.id} />
                 ) : (
                   <div className="text-center py-12 text-sm text-ink-muted-soft">
                     Пока нет комментариев

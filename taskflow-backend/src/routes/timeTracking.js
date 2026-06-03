@@ -14,14 +14,22 @@ router.get('/task/:taskId', async (req, res) => {
     const access = await getBoardAccess(boardId, req.user.id)
     if (!access) return res.status(403).json({ error: 'Нет доступа' })
     const result = await query(
-      `SELECT tt.*, u.email AS user_email FROM dbo.time_tracking tt
+      `SELECT tt.*, u.email AS user_email, u.full_name AS user_full_name,
+              u.username AS user_username, u.avatar_url AS user_avatar_url
+       FROM dbo.time_tracking tt
        INNER JOIN dbo.users u ON u.id = tt.user_id
        WHERE tt.task_id = @tid ORDER BY tt.started_at DESC`,
       { tid: req.params.taskId }
     )
     const data = result.recordset.map((r) => ({
       ...r,
-      user: { id: r.user_id, email: r.user_email },
+      user: {
+        id: r.user_id,
+        email: r.user_email,
+        full_name: r.user_full_name,
+        username: r.user_username,
+        avatar_url: r.user_avatar_url,
+      },
     }))
     res.json(data)
   } catch (err) {

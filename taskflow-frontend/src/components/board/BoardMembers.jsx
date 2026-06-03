@@ -64,7 +64,7 @@ function BoardMembers({ boardId, isOwner }) {
 
   if (!isOwner) return null
 
-  const totalMembers = (members?.length || 0) + 1
+  const totalMembers = members?.length || 0
 
   return (
     <>
@@ -90,57 +90,67 @@ function BoardMembers({ boardId, isOwner }) {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between p-2 bg-canvas dark:bg-navy-elevated rounded-md border border-hairline dark:border-navy-hairline">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center font-semibold text-sm">
-                {user?.email?.[0]?.toUpperCase() || 'В'}
-              </div>
-              <div>
-                <div className="text-sm font-medium text-ink dark:text-canvas">{user?.email || 'Владелец'}</div>
-                <div className="text-[11px] text-ink-muted-soft">Вы</div>
-              </div>
-            </div>
-            {getRoleBadge('owner')}
-          </div>
-
-          {members?.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between p-2 bg-canvas dark:bg-navy-elevated rounded-md border border-hairline dark:border-navy-hairline hover:border-coral/40 transition-colors duration-200"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-canvas-card dark:bg-navy-soft border border-hairline dark:border-navy-hairline text-ink-body dark:text-ink-muted flex items-center justify-center font-semibold text-sm">
-                  {member.profiles?.email?.[0]?.toUpperCase() || '?'}
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-ink dark:text-canvas">
-                    {member.profiles?.email || 'Неизвестный'}
-                    {member.user_id === user?.id && (
-                      <span className="ml-2 text-[11px] text-ink-muted-soft">(Вы)</span>
-                    )}
+          {members?.map((member) => {
+            const isMe = member.user_id === user?.id
+            const isOwnerRole = member.role === 'owner'
+            const displayName = member.profiles?.full_name || member.profiles?.email || 'Неизвестный'
+            const initial = (displayName[0] || '?').toUpperCase()
+            return (
+              <div
+                key={member.id}
+                className="flex items-center justify-between gap-2 p-2 bg-canvas dark:bg-navy-elevated rounded-md border border-hairline dark:border-navy-hairline hover:border-coral/40 transition-colors duration-200"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {member.profiles?.avatar_url ? (
+                    <img
+                      src={member.profiles.avatar_url}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-8 h-8 flex-shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-semibold text-sm ${
+                      isOwnerRole
+                        ? 'bg-coral text-white'
+                        : 'bg-canvas-card dark:bg-navy-soft border border-hairline dark:border-navy-hairline text-ink-body dark:text-ink-muted'
+                    }`}>
+                      {initial}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-ink dark:text-canvas truncate">
+                      {displayName}
+                      {isMe && (
+                        <span className="ml-2 text-[11px] text-ink-muted-soft">(Вы)</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-ink-muted-soft truncate">
+                      {member.profiles?.username
+                        ? `@${member.profiles.username}`
+                        : member.created_at
+                          ? new Date(member.created_at).toLocaleDateString('ru-RU')
+                          : member.profiles?.email}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-ink-muted-soft">
-                    {new Date(member.invited_at || member.created_at).toLocaleDateString('ru-RU')}
-                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {getRoleBadge(member.role)}
+                  {!isOwnerRole && !isMe && (
+                    <button
+                      onClick={() => setMemberToRemove(member)}
+                      className="p-1 text-ink-muted-soft hover:text-danger rounded transition-colors"
+                      title="Удалить участника"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                {getRoleBadge(member.role)}
-                {member.role !== 'owner' && (
-                  <button
-                    onClick={() => setMemberToRemove(member)}
-                    className="p-1 text-ink-muted-soft hover:text-danger rounded transition-colors"
-                    title="Удалить участника"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

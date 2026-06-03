@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { authService } from '../services/authService'
-import { clearAuth, getStoredUser, getToken } from '../services/apiClient'
+import { clearAuth, getStoredUser, getToken, USER_KEY } from '../services/apiClient'
 import { disconnectSocket } from '../services/socketClient'
 
 const AuthContext = createContext({})
@@ -26,8 +26,10 @@ export const AuthProvider = ({ children }) => {
     }
     authService.getCurrentUser()
       .then((u) => {
-        if (u) setUser(u)
-        else {
+        if (u) {
+          setUser(u)
+          try { localStorage.setItem(USER_KEY, JSON.stringify(u)) } catch { /* ignore */ }
+        } else {
           clearAuth()
           setUser(null)
         }
@@ -44,8 +46,8 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth:logout', onLogout)
   }, [])
 
-  const signIn = useCallback(async (email, password) => {
-    const data = await authService.signIn(email, password)
+  const signIn = useCallback(async (identifier, password) => {
+    const data = await authService.signIn(identifier, password)
     setUser(data.user)
     return data
   }, [])
@@ -62,7 +64,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }, [])
 
-  const value = { user, loading, signIn, signUp, signOut }
+  const applyAuth = useCallback(({ token, user: u }) => {
+    authService.setAuth({ token, user: u })
+    setUser(u)
+  }, [])
+
+  const refreshUser = useCallback(async () => {
+    const u = await authService.getCurrentUser()
+    if (u) {
+      setUser(u)
+      try { localStorage.setItem(USER_KEY, JSON.stringify(u)) } catch { /* ignore */ }
+    }
+  }, [])
+
+  const value = { user, loading, signIn, signUp, signOut, applyAuth, refreshUser, setUser }
 
   return (
     <AuthContext.Provider value={value}>

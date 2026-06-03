@@ -15,16 +15,79 @@ export function initTelegram() {
       console.error('Telegram polling error:', err.message)
     })
 
-    // /start <code> — привязать аккаунт
     bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
       const chatId = msg.chat.id
       const code = match[1]?.trim()
       const username = msg.from.username || null
+      const firstName = msg.from.first_name || null
 
       if (!code) {
         await bot.sendMessage(
           chatId,
-          '👋 Привет! Это бот TaskFlow.\n\nЧтобы получать уведомления, перейди в TaskFlow → Настройки → Telegram, и нажми «Подключить». Тебе дадут команду со специальным кодом — отправь её сюда.'
+          '👋 Привет! Это бот TaskFlow.\n\nЧтобы получать уведомления — открой TaskFlow → Настройки → Telegram и нажми «Подключить».\nЧтобы зарегистрироваться — нажми «Войти через Telegram» на странице регистрации.'
+        )
+        return
+      }
+
+      if (code.startsWith('reg_') || code.startsWith('login_')) {
+        const sess = await query(
+          `SELECT TOP 1 * FROM dbo.tg_register_sessions
+           WHERE code = @code AND status = 'pending'`,
+          { code }
+        )
+        const row = sess.recordset[0]
+        if (!row) {
+          await bot.sendMessage(chatId, '❌ Код недействителен или уже использован.')
+          return
+        }
+        if (new Date(row.expires_at) < new Date()) {
+          await bot.sendMessage(chatId, '⏱ Код истёк. Получи новый на сайте.')
+          return
+        }
+
+        const exists = await query(
+          `SELECT TOP 1 id, email, full_name FROM dbo.users WHERE telegram_chat_id = @chatId`,
+          { chatId }
+        )
+        if (exists.recordset.length) {
+          const user = exists.recordset[0]
+          await query(
+            `UPDATE dbo.tg_register_sessions SET
+               status = 'logged_in',
+               user_id = @uid,
+               telegram_chat_id = @chatId,
+               telegram_username = @username,
+               telegram_first_name = @firstName
+             WHERE id = @id`,
+            { uid: user.id, chatId, username, firstName, id: row.id }
+          )
+          await bot.sendMessage(
+            chatId,
+            `✅ С возвращением${user.full_name ? `, ${user.full_name}` : ''}!\nВернись на сайт — вход выполнен.`
+          )
+          return
+        }
+
+        if (code.startsWith('login_')) {
+          await bot.sendMessage(
+            chatId,
+            '❌ С этим Telegram ещё нет аккаунта.\nОткрой страницу регистрации на сайте и выбери «Регистрация через Telegram».'
+          )
+          return
+        }
+
+        await query(
+          `UPDATE dbo.tg_register_sessions SET
+             status = 'telegram_verified',
+             telegram_chat_id = @chatId,
+             telegram_username = @username,
+             telegram_first_name = @firstName
+           WHERE id = @id`,
+          { chatId, username, firstName, id: row.id }
+        )
+        await bot.sendMessage(
+          chatId,
+          `✅ Отлично, ${firstName || 'друг'}!\nТеперь вернись на сайт и заверши регистрацию — нужно ввести email.`
         )
         return
       }

@@ -6,11 +6,23 @@ export const boardMemberService = {
     return data
   },
 
-  async inviteMember(boardId, email, role = 'viewer') {
+  async inviteMember(boardId, { email, username, userId, role = 'member' }) {
     const { data } = await apiClient.post('/members', {
       board_id: boardId,
       email,
+      username,
+      user_id: userId,
       role,
+    })
+    return data
+  },
+
+  async inviteTeam(boardId, teamId, role = 'member', userIds) {
+    const { data } = await apiClient.post('/members/invite-team', {
+      board_id: boardId,
+      team_id: teamId,
+      role,
+      userIds,
     })
     return data
   },

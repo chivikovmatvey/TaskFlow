@@ -130,6 +130,46 @@ html, body, header, main, aside, nav, section, article, div, button, input, text
 .stagger-card:nth-child(5) { animation-delay: 0.18s; }
 .stagger-card:nth-child(n+6) { animation-delay: 0.22s; }
 
+/* ─── скрытый скроллбар (горизонтальные табы и т.п.) ───────── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ─── date input: расширяем зону клика на всю плашку ──────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+}
+input[type="date"] {
+  position: relative;
+}
+
+/* ─── touch devices: показываем hover-only элементы ───────── */
+@media (hover: none), (pointer: coarse) {
+  .group:hover .group-hover\:opacity-100,
+  .group\/column:hover .group-hover\/column\:opacity-100 {
+    opacity: 1;
+  }
+  /* всегда видимые на тачскринах */
+  [class*="group-hover:opacity-100"],
+  [class*="group-hover/column:opacity-100"] {
+    opacity: 1 !important;
+  }
+}
+
 /* ─── scrollbar ────────────────────────────────────────────── */
 .scrollbar-thin::-webkit-scrollbar {
   height: 8px;
@@ -172,3 +212,126 @@ button:focus-visible {
   background-color: var(--coral-soft);
   color: var(--ink);
 }
+
+/* ─── attachment preview: xlsx ─────────────────────────────── */
+.xlsx-preview table {
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 100%;
+}
+.xlsx-preview td, .xlsx-preview th {
+  border: 1px solid var(--hairline);
+  padding: 6px 10px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+.xlsx-preview tr:nth-child(odd) td {
+  background: rgba(0,0,0,0.02);
+}
+.dark .xlsx-preview td, .dark .xlsx-preview th {
+  border-color: var(--navy-hairline, #1f2940);
+}
+.dark .xlsx-preview tr:nth-child(odd) td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* ─── attachment preview: docx ─────────────────────────────── */
+.docx-preview h1, .docx-preview h2, .docx-preview h3 {
+  font-family: inherit;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+.docx-preview h1 { font-size: 1.6em; }
+.docx-preview h2 { font-size: 1.3em; }
+.docx-preview h3 { font-size: 1.1em; }
+.docx-preview p { margin: 0.6em 0; line-height: 1.6; }
+.docx-preview ul, .docx-preview ol { margin: 0.6em 0; padding-left: 1.6em; }
+.docx-preview table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+}
+.docx-preview td, .docx-preview th {
+  border: 1px solid var(--hairline);
+  padding: 6px 10px;
+}
+.dark .docx-preview td, .dark .docx-preview th {
+  border-color: var(--navy-hairline, #1f2940);
+}
+.docx-preview img { max-width: 100%; height: auto; }
+
+/* ─── attachment preview: markdown ─────────────────────────── */
+.md-preview { line-height: 1.65; font-size: 15px; }
+.md-preview h1, .md-preview h2, .md-preview h3,
+.md-preview h4, .md-preview h5, .md-preview h6 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 1.4em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+.md-preview h1 { font-size: 2em; border-bottom: 1px solid var(--hairline); padding-bottom: 0.3em; }
+.md-preview h2 { font-size: 1.6em; border-bottom: 1px solid var(--hairline); padding-bottom: 0.25em; }
+.md-preview h3 { font-size: 1.3em; }
+.md-preview h4 { font-size: 1.1em; }
+.md-preview p { margin: 0.7em 0; }
+.md-preview a { color: var(--coral); text-decoration: underline; text-underline-offset: 2px; }
+.md-preview a:hover { color: var(--coral-active); }
+.md-preview strong { font-weight: 600; }
+.md-preview em { font-style: italic; }
+.md-preview ul, .md-preview ol { margin: 0.7em 0; padding-left: 1.6em; }
+.md-preview ul { list-style: disc; }
+.md-preview ol { list-style: decimal; }
+.md-preview li { margin: 0.25em 0; }
+.md-preview li > input[type="checkbox"] { margin-right: 6px; }
+.md-preview blockquote {
+  border-left: 3px solid var(--coral);
+  padding: 0.2em 0 0.2em 1em;
+  margin: 0.8em 0;
+  color: var(--ink-muted);
+  background: rgba(244, 101, 75, 0.04);
+}
+.md-preview code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88em;
+  background: rgba(0,0,0,0.05);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+}
+.dark .md-preview code { background: rgba(255,255,255,0.07); }
+.md-preview pre {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.9em 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.dark .md-preview pre {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--navy-hairline, #1f2940);
+}
+.md-preview pre code { background: transparent; padding: 0; border-radius: 0; }
+.md-preview hr {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 1.4em 0;
+}
+.dark .md-preview hr { border-top-color: var(--navy-hairline, #1f2940); }
+.md-preview table {
+  border-collapse: collapse;
+  margin: 0.9em 0;
+  width: 100%;
+}
+.md-preview th, .md-preview td {
+  border: 1px solid var(--hairline);
+  padding: 0.45em 0.7em;
+}
+.md-preview th { background: rgba(0,0,0,0.03); font-weight: 600; }
+.dark .md-preview th, .dark .md-preview td { border-color: var(--navy-hairline, #1f2940); }
+.dark .md-preview th { background: rgba(255,255,255,0.04); }
+.md-preview img { max-width: 100%; height: auto; border-radius: 6px; }

@@ -2,162 +2,218 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { taskService } from '../../services/taskService'
-import ConfirmModal from '../common/ConfirmModal'
 
-function CommentItem({ comment, taskId, currentUserId }) {
+function CommentItem({ comment, taskId, currentUserId, isReply = false, onReply, replyingTo, onCancelReply }) {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(comment.content)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showRepliesForm, setShowRepliesForm] = useState(false)
+  const [replyText, setReplyText] = useState('')
 
   const isOwner = comment.user_id === currentUserId
 
-  const updateCommentMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: (content) => taskService.updateComment(comment.id, content),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
-      toast.success('Комментарий обновлен')
       setIsEditing(false)
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка обновления комментария')
-    },
+    onError: (err) => toast.error(err.message || 'Ошибка'),
   })
 
-  const deleteCommentMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: () => taskService.deleteComment(comment.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
-      toast.success('Комментарий удален')
-
-      queryClient.refetchQueries({ queryKey: ['comments', taskId] })
+      toast.success('Удалено')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Ошибка удаления комментария')
-    },
+    onError: (err) => toast.error(err.message || 'Ошибка'),
   })
 
-  const handleSave = () => {
-    if (!editedContent.trim()) {
-      toast.error('Комментарий не может быть пустым')
-      return
-    }
+  const replyMutation = useMutation({
+    mutationFn: (text) => taskService.addComment(taskId, text, comment.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
+      setReplyText('')
+      setShowRepliesForm(false)
+      onCancelReply?.()
+    },
+    onError: (err) => toast.error(err.message || 'Ошибка'),
+  })
 
+  const save = () => {
+    if (!editedContent.trim()) return toast.error('Не может быть пустым')
     if (editedContent === comment.content) {
       setIsEditing(false)
       return
     }
-
-    updateCommentMutation.mutate(editedContent)
+    updateMutation.mutate(editedContent.trim())
   }
 
-  const handleDelete = () => {
-    deleteCommentMutation.mutate()
-    setShowDeleteConfirm(false)
+  const sendReply = () => {
+    if (!replyText.trim()) return
+    replyMutation.mutate(replyText.trim())
   }
+
+  const displayName =
+    comment.user_full_name ||
+    (comment.user_username ? `@${comment.user_username}` : null) ||
+    comment.user_email ||
+    'Пользователь'
 
   return (
-    <>
-      <div className="bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg p-4 hover:border-gray-300 dark:hover:border-gray-500 transition">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
-            {isOwner ? currentUserId?.[0]?.toUpperCase() : '?'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {isOwner ? 'Вы' : 'Пользователь'}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(comment.created_at).toLocaleString('ru-RU', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-                {comment.updated_at && comment.updated_at !== comment.created_at && (
-                  <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-                    (изменено)
-                  </span>
-                )}
-              </div>
+    <div className={`flex gap-2.5 ${isReply ? 'pl-2' : ''}`}>
+      <Avatar
+        url={comment.user_avatar_url}
+        name={displayName}
+        size={isReply ? 26 : 32}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5 mb-0.5">
+          <span className="text-sm font-medium text-ink dark:text-canvas">
+            {displayName}
+            {isOwner && <span className="ml-1.5 text-[10px] uppercase tracking-caption-up font-semibold text-coral">вы</span>}
+          </span>
+          {comment.user_username && comment.user_full_name && (
+            <span className="text-[11px] text-ink-muted-soft">@{comment.user_username}</span>
+          )}
+          <span className="text-[11px] text-ink-muted-soft">{formatRelative(comment.created_at)}</span>
+          {comment.updated_at && comment.updated_at !== comment.created_at && (
+            <span className="text-[10px] text-ink-muted-soft italic">изменено</span>
+          )}
+        </div>
 
-              {isOwner && !isEditing && (
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded transition"
-                    title="Редактировать"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded transition"
-                    title="Удалить"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              )}
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas text-sm focus-ring resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={save}
+                disabled={updateMutation.isPending}
+                className="px-3 py-1 bg-coral hover:bg-coral-active text-white text-xs font-medium rounded-md shadow-coral transition-all disabled:opacity-50"
+              >
+                {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
+              </button>
+              <button
+                onClick={() => { setIsEditing(false); setEditedContent(comment.content) }}
+                className="px-3 py-1 text-ink-body dark:text-ink-muted hover:bg-canvas-soft dark:hover:bg-navy-soft text-xs font-medium rounded-md transition-colors"
+              >
+                Отмена
+              </button>
             </div>
+          </div>
+        ) : (
+          <p
+            className="text-sm text-ink-body dark:text-ink-muted whitespace-pre-wrap break-words leading-relaxed"
+            style={{ overflowWrap: 'anywhere' }}
+          >
+            {comment.content}
+          </p>
+        )}
 
-            {isEditing ? (
-              <div className="space-y-2">
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
-                  rows="3"
-                  autoFocus
-                />
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSave}
-                    disabled={updateCommentMutation.isPending}
-                    className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition disabled:opacity-50"
-                  >
-                    {updateCommentMutation.isPending ? 'Сохранение...' : 'Сохранить'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditing(false)
-                      setEditedContent(comment.content)
-                    }}
-                    className="px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
-                {comment.content}
-              </p>
+        {!isEditing && (
+          <div className="flex items-center gap-1 mt-1 -ml-1.5">
+            <button
+              onClick={() => {
+                setShowRepliesForm((v) => !v)
+                onReply?.(comment.id)
+              }}
+              className="px-2 py-0.5 text-[11px] font-medium text-ink-muted hover:text-coral hover:bg-coral/10 rounded transition-colors"
+            >
+              Ответить
+            </button>
+            {isOwner && (
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-2 py-0.5 text-[11px] font-medium text-ink-muted hover:text-ink dark:hover:text-canvas rounded transition-colors"
+                >
+                  Изменить
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Удалить комментарий?')) deleteMutation.mutate()
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="px-2 py-0.5 text-[11px] font-medium text-ink-muted hover:text-danger rounded transition-colors disabled:opacity-50"
+                >
+                  Удалить
+                </button>
+              </>
             )}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDelete}
-        title="Удалить комментарий?"
-        message="Вы уверены, что хотите удалить этот комментарий? Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
-        type="danger"
-      />
-    </>
+        {showRepliesForm && (
+          <div className="mt-2 animate-fadeIn">
+            <textarea
+              autoFocus
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder={`Ответ для ${displayName}...`}
+              rows={2}
+              className="w-full px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-ink dark:text-canvas text-sm focus-ring resize-none"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={sendReply}
+                disabled={!replyText.trim() || replyMutation.isPending}
+                className="px-3 py-1.5 text-xs font-medium bg-coral hover:bg-coral-active text-white rounded-md shadow-coral transition-all disabled:opacity-50"
+              >
+                Отправить
+              </button>
+              <button
+                onClick={() => { setShowRepliesForm(false); setReplyText('') }}
+                className="px-3 py-1.5 text-xs font-medium text-ink-muted hover:text-ink dark:hover:text-canvas transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
+}
+
+function Avatar({ url, name, size = 32 }) {
+  const initial = (name || '?')[0]?.toUpperCase() || '?'
+  const style = { width: size, height: size, fontSize: size * 0.4 }
+  return url ? (
+    <img
+      src={url}
+      alt=""
+      referrerPolicy="no-referrer"
+      style={style}
+      className="rounded-full object-cover shrink-0"
+    />
+  ) : (
+    <div
+      style={style}
+      className="rounded-full bg-coral text-white font-semibold flex items-center justify-center shrink-0"
+    >
+      {initial}
+    </div>
+  )
+}
+
+function formatRelative(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const diffMin = Math.floor((Date.now() - d.getTime()) / 60000)
+  if (diffMin < 1) return 'только что'
+  if (diffMin < 60) return `${diffMin} мин назад`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `${diffH} ч назад`
+  const diffD = Math.floor(diffH / 24)
+  if (diffD < 7) return `${diffD} дн назад`
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export default CommentItem

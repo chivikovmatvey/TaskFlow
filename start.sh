@@ -30,7 +30,6 @@ if ! docker ps --format '{{.Names}}' | grep -q '^sqlserver$'; then
   if docker ps -a --format '{{.Names}}' | grep -q '^sqlserver$'; then
     info "Запуск контейнера sqlserver..."
     docker start sqlserver
-    sleep 3
     ok "Контейнер sqlserver запущен"
   else
     error "Контейнер sqlserver не найден"
@@ -39,6 +38,19 @@ if ! docker ps --format '{{.Names}}' | grep -q '^sqlserver$'; then
 else
   ok "Контейнер sqlserver уже работает"
 fi
+
+info "Ожидание готовности SQL Server (порт 1433)..."
+for i in $(seq 1 60); do
+  if (echo > /dev/tcp/127.0.0.1/1433) 2>/dev/null; then
+    ok "SQL Server принимает соединения"
+    break
+  fi
+  sleep 1
+  if [[ $i -eq 60 ]]; then
+    error "SQL Server не ответил на порту 1433 за 60 секунд"
+    exit 1
+  fi
+done
 
 # ── 2. Установка зависимостей (только если node_modules отсутствует) ──
 if [[ ! -d "$ROOT/taskflow-backend/node_modules" ]]; then

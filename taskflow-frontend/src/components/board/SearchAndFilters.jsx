@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { labelService } from '../../services/labelService'
+import Select from '../common/Select'
 
 function SearchAndFilters({ boardId, onSearchChange, onFiltersChange, onSortChange, filters, currentSort }) {
   const [showFilters, setShowFilters] = useState(false)
@@ -60,7 +61,6 @@ function SearchAndFilters({ boardId, onSearchChange, onFiltersChange, onSortChan
     { value: 'title', label: 'Название' },
   ]
 
-  // Минималистичная пилл-кнопка для фильтров
   const Pill = ({ active, onClick, children, accent }) => (
     <button
       onClick={onClick}
@@ -94,25 +94,23 @@ function SearchAndFilters({ boardId, onSearchChange, onFiltersChange, onSortChan
 
         {/* Sort */}
         {onSortChange && (
-          <div className="flex items-center gap-1">
-            <select
-              value={currentSort?.field || 'position'}
-              onChange={(e) => onSortChange({
-                field: e.target.value,
-                direction: currentSort?.direction || 'asc'
-              })}
-              className="px-3 py-2 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md text-xs font-medium text-ink-body dark:text-ink-muted focus-ring cursor-pointer"
-            >
-              {sortOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-1 min-w-[150px]">
+            <div className="flex-1">
+              <Select
+                value={currentSort?.field || 'position'}
+                onChange={(field) => onSortChange({
+                  field,
+                  direction: currentSort?.direction || 'asc'
+                })}
+                options={sortOptions}
+              />
+            </div>
             <button
               onClick={() => onSortChange({
                 field: currentSort?.field || 'position',
                 direction: currentSort?.direction === 'asc' ? 'desc' : 'asc'
               })}
-              className="w-9 h-9 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md hover:border-coral transition-all duration-200 flex items-center justify-center text-ink-body dark:text-ink-muted hover:text-coral"
+              className="w-9 h-9 bg-canvas dark:bg-navy-elevated border border-hairline dark:border-navy-hairline rounded-md hover:border-coral transition-all duration-200 flex items-center justify-center text-ink-body dark:text-ink-muted hover:text-coral flex-shrink-0"
               title={currentSort?.direction === 'asc' ? 'По возрастанию' : 'По убыванию'}
             >
               <svg

@@ -4,11 +4,14 @@ import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { taskService } from '../../services/taskService'
 import { labelService } from '../../services/labelService'
+import { boardMemberService } from '../../services/boardMemberService'
+import { useAuth } from '../../context/AuthContext'
 import TaskModal from '../task/TaskModal'
 import ConfirmModal from '../common/ConfirmModal'
 
 function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const [showModal, setShowModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -27,6 +30,53 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
     queryFn: () => labelService.getTaskLabels(task.id),
     staleTime: 10000,
   })
+
+  const { data: boardMembers = [] } = useQuery({
+    queryKey: ['board-members', boardId],
+    queryFn: () => boardMemberService.getBoardMembers(boardId),
+    staleTime: 30000,
+  })
+
+  const assignee = task.assigned_to
+    ? boardMembers.find((m) => m.user_id === task.assigned_to)
+    : null
+  const canTake = !task.assigned_to && task.created_by !== user?.id
+
+  const takeTaskMutation = useMutation({
+    mutationFn: () => taskService.updateTask(task.id, { assigned_to: user.id }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['board', boardId] })
+      const previousBoard = queryClient.getQueryData(['board', boardId])
+      queryClient.setQueryData(['board', boardId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          columns: old.columns.map((col) => ({
+            ...col,
+            tasks: col.tasks.map((t) =>
+              t.id === task.id ? { ...t, assigned_to: user.id } : t
+            ),
+          })),
+        }
+      })
+      return { previousBoard }
+    },
+    onSuccess: () => {
+      toast.success('Задача взята в работу')
+      queryClient.invalidateQueries({ queryKey: ['board', boardId] })
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(['board', boardId], context.previousBoard)
+      }
+      toast.error(error.message || 'Не удалось взять задачу')
+    },
+  })
+
+  const handleTakeTask = (e) => {
+    e.stopPropagation()
+    takeTaskMutation.mutate()
+  }
 
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['comments', task.id] })
@@ -180,11 +230,15 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
         onClick={handleCardClick}
         className="bg-canvas dark:bg-navy-elevated rounded-lg p-3.5 cursor-pointer border border-hairline dark:border-navy-hairline hover:border-coral/40 hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300 ease-smooth group relative"
       >
-        <div className="absolute top-2 right-2">
+        {assignee && (
+          <AssigneeBadge member={assignee} />
+        )}
+
+        <div className={`absolute top-2 ${assignee ? 'right-10' : 'right-2'}`}>
           <button
             ref={menuButtonRef}
             onClick={handleMenuClick}
-            className="opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft rounded-md"
+            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 p-1.5 text-ink-muted dark:text-ink-muted-soft hover:text-ink dark:hover:text-canvas hover:bg-canvas-soft dark:hover:bg-navy-soft rounded-md"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="6" r="1.5" />
@@ -194,9 +248,8 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           </button>
         </div>
 
-        {/* Labels */}
         {taskLabels.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
+          <div className={`flex flex-wrap gap-1 mb-2 ${assignee ? 'pr-10' : ''}`}>
             {taskLabels.map((label) => (
               <span
                 key={label.id}
@@ -213,7 +266,7 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           </div>
         )}
 
-        <div className="pr-6">
+        <div className={assignee ? 'pr-16' : 'pr-6'}>
           <h4 className="text-sm font-medium text-ink dark:text-canvas leading-snug mb-1.5">{task.title}</h4>
         </div>
 
@@ -245,6 +298,22 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
           </div>
         )}
 
+        {canTake && (
+          <div className="mb-2.5">
+            <button
+              type="button"
+              onClick={handleTakeTask}
+              disabled={takeTaskMutation.isPending}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium border border-coral/30 bg-coral-soft text-coral hover:bg-coral hover:text-white hover:border-coral transition-all disabled:opacity-50"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              {takeTaskMutation.isPending ? 'Беру...' : 'Взять в работу'}
+            </button>
+          </div>
+        )}
+
         <div className="pt-2.5 border-t border-hairline-soft dark:border-navy-hairline flex items-center justify-between">
           <div className="flex items-center text-[11px] text-ink-muted-soft">
             {new Date(task.created_at).toLocaleDateString('ru-RU', {
@@ -270,7 +339,6 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
         </div>
       </div>
 
-      {/* Menu Portal */}
       {showMenu && createPortal(
         <>
           <div
@@ -320,6 +388,32 @@ function TaskCard({ task, boardId, isDragging, onModalStateChange }) {
         type="danger"
       />
     </>
+  )
+}
+
+function AssigneeBadge({ member }) {
+  const profile = member?.profiles || {}
+  const name = profile.full_name || profile.username || profile.email || '?'
+  const initial = name[0]?.toUpperCase() || '?'
+  return (
+    <div
+      title={`Исполнитель: ${name}`}
+      className="absolute top-1.5 right-1.5 z-10 ring-2 ring-canvas dark:ring-navy-elevated rounded-full shadow-sm"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {profile.avatar_url ? (
+        <img
+          src={profile.avatar_url}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="w-7 h-7 rounded-full object-cover"
+        />
+      ) : (
+        <div className="w-7 h-7 rounded-full bg-coral text-white font-semibold text-[11px] flex items-center justify-center">
+          {initial}
+        </div>
+      )}
+    </div>
   )
 }
 

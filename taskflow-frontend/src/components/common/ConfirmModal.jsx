@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect } from 'react'
+import { useModalLock } from '../../hooks/useModalLock'
 
 function ConfirmModal({
   isOpen,
@@ -11,6 +12,8 @@ function ConfirmModal({
   cancelText = 'Отмена',
   type = 'danger'
 }) {
+  useModalLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
     const onEsc = (e) => e.key === 'Escape' && onClose()

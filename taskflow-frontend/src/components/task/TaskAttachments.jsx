@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { attachmentService } from '../../services/attachmentService'
+import AttachmentPreviewModal from './AttachmentPreviewModal'
 
 function TaskAttachments({ taskId }) {
   const queryClient = useQueryClient()
@@ -9,8 +10,6 @@ function TaskAttachments({ taskId }) {
   const [dragActive, setDragActive] = useState(false)
   const [previewFile, setPreviewFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
-  const [textContent, setTextContent] = useState('')
-  const [loadingText, setLoadingText] = useState(false)
   const fileInputRef = useRef(null)
 
   const { data: attachments = [], isLoading } = useQuery({
@@ -150,36 +149,24 @@ function TaskAttachments({ taskId }) {
     const blobUrl = URL.createObjectURL(blob)
     setPreviewUrl(blobUrl)
     setPreviewFile(attachment)
-
-    if (attachment.file_type.startsWith('text/')) {
-      setLoadingText(true)
-      try {
-        const text = await blob.text()
-        setTextContent(text)
-      } catch (error) {
-        console.error('Error loading text file:', error)
-        toast.error('Ошибка загрузки текстового файла')
-      } finally {
-        setLoadingText(false)
-      }
-    }
   }
 
   const closePreview = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewFile(null)
     setPreviewUrl(null)
-    setTextContent('')
-    setLoadingText(false)
   }
 
-  const canPreview = (fileType) => {
+  const canPreview = (fileType, fileName = '') => {
     return fileType.startsWith('image/') ||
            fileType.startsWith('video/') ||
            fileType.includes('pdf') ||
            fileType.startsWith('text/') ||
-           fileType.includes('wordprocessingml') ||
-           fileType.includes('markdown')
+           fileType.includes('wordprocessingml') || /\.docx$/i.test(fileName) ||
+           fileType.includes('spreadsheetml') || /\.xlsx?$/i.test(fileName) ||
+           fileType.includes('markdown') || /\.(md|markdown)$/i.test(fileName) ||
+           fileType.includes('json') ||
+           fileType.includes('xml')
   }
 
   return (
@@ -271,7 +258,7 @@ function TaskAttachments({ taskId }) {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {canPreview(attachment.file_type) && (
+                {canPreview(attachment.file_type, attachment.file_name) && (
                   <button
                     onClick={() => handlePreview(attachment)}
                     className="p-1.5 text-ink-muted dark:text-ink-muted-soft hover:text-coral rounded transition-colors"
@@ -308,107 +295,12 @@ function TaskAttachments({ taskId }) {
         </div>
       )}
 
-      {previewFile && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
-          onClick={closePreview}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                {getFileIcon(previewFile.file_type)}
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">{previewFile.file_name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{formatFileSize(previewFile.file_size)}</p>
-                </div>
-              </div>
-              <button
-                onClick={closePreview}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900">
-              {previewFile.file_type.startsWith('image/') && (
-                <div className="flex items-center justify-center h-full">
-                  <img
-                    src={previewUrl}
-                    alt={previewFile.file_name}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              )}
-
-              {previewFile.file_type.startsWith('video/') && (
-                <div className="flex items-center justify-center h-full">
-                  <video
-                    src={previewUrl}
-                    controls
-                    className="max-w-full max-h-full"
-                  >
-                    Ваш браузер не поддерживает воспроизведение видео
-                  </video>
-                </div>
-              )}
-
-              {previewFile.file_type.includes('pdf') && (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full min-h-[600px] bg-white dark:bg-gray-800"
-                  title={previewFile.file_name}
-                />
-              )}
-
-              {previewFile.file_type.startsWith('text/') && (
-                <div className="w-full h-full min-h-[600px] overflow-auto">
-                  {loadingText ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <pre className="p-4 text-sm font-mono text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
-                      {textContent}
-                    </pre>
-                  )}
-                </div>
-              )}
-
-              {previewFile.file_type.includes('wordprocessingml') && (
-                <div className="flex items-center justify-center h-full min-h-[400px]">
-                  <div className="text-center p-8">
-                    <svg className="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Документ Word</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">Предпросмотр документов Word недоступен в браузере</p>
-                    <button
-                      onClick={() => attachmentService.downloadFile(previewFile.file_path, previewFile.file_name, previewFile.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Скачать для просмотра
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
-              <button
-                onClick={() => attachmentService.downloadFile(previewFile.file_path, previewFile.file_name, previewFile.id)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Скачать файл
-              </button>
-            </div>
-          </div>
-        </div>
+      {previewFile && previewUrl && (
+        <AttachmentPreviewModal
+          attachment={previewFile}
+          blobUrl={previewUrl}
+          onClose={closePreview}
+        />
       )}
     </div>
   )
