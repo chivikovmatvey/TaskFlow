@@ -1,0 +1,115 @@
+services:
+
+  # ─── База данных (SQL Server 2022) ───────────────────────────────────────────
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: taskflow_db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${DB_PASSWORD}
+      MSSQL_PID: Express
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - taskflow_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$SA_PASSWORD\" -C -Q 'SELECT 1' 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  # ─── Одноразовая инициализация схемы и миграций ──────────────────────────────
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: taskflow_db_init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_SERVER: db
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./taskflow-backend/sql:/sql:ro
+      - ./docker/db-init.sh:/db-init.sh:ro
+    entrypoint: ["/bin/bash", "/db-init.sh"]
+    networks:
+      - taskflow_net
+    restart: on-failure
+
+  # ─── Backend (Express.js) ────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./taskflow-backend
+    container_name: taskflow_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+
+      # Database
+      DB_SERVER: db
+      DB_PORT: 1433
+      DB_NAME: taskflow
+      DB_USER: sa
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
+
+      # CORS
+      FRONTEND_URL: ${FRONTEND_URL}
+
+      # Public URL (для OAuth callback и прочего)
+      SERVER_URL: ${SERVER_URL}
+
+      # Telegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+
+      # SMTP
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+
+      # OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID:-}
+      YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET:-}
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - taskflow_net
+    restart: unless-stopped
+
+  # ─── Frontend (React → nginx) ─────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./taskflow-frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    container_name: taskflow_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - taskflow_net
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
+  uploads_data:
+
+networks:
+  taskflow_net:
+    driver: bridge
